@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Boda WhyNot!?</title>
+
+<style>
+:root{
+  --beige:#f6f1e8;
+  --gold:#c6a76b;
+  --dark:#4a3f35;
+}
+
+body{
+  margin:0;
+  font-family:-apple-system, BlinkMacSystemFont, sans-serif;
+  background:var(--beige);
+  color:var(--dark);
+}
+
+/* HEADER */
+.header{
+  position:relative;
+  height:55vh;
+  overflow:hidden;
+  background-image:url("https://drive.google.com/thumbnail?id=1CROMf12csBQiNZiGvw4ZmSMU0yZT52oV&sz=w2000");
+  background-size:cover;
+  background-position:center;
+}
+
+.header::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.35);
+}
+
+.header-title{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  color:white;
+  text-align:center;
+  z-index:2;
+}
+
+.header-title h1{
+  font-weight:300;
+  margin:0;
+  font-size:36px;
+}
+
+.header-title span{
+  font-size:44px;
+  font-weight:600;
+}
+
+/* GALERÍA */
+.gallery{
+  padding:20px 14px 140px;
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+}
+
+.card{
+  background:white;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 6px 16px rgba(0,0,0,0.08);
+}
+
+.card img, .card video{
+  width:100%;
+  display:block;
+}
+
+.actions{
+  padding:10px;
+  font-size:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.actions button{
+  background:none;
+  border:none;
+  cursor:pointer;
+  font-size:16px;
+}
+
+.comment{
+  font-size:13px;
+  padding:0 10px;
+}
+
+.comment-input{
+  width:85%;
+  padding:6px;
+  margin:8px 0;
+  border-radius:8px;
+  border:1px solid #ddd;
+}
+
+.upload-bar{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  background:white;
+  padding:14px;
+  box-shadow:0 -3px 10px rgba(0,0,0,0.1);
+  text-align:center;
+}
+
+.upload-btn{
+  background:var(--gold);
+  color:white;
+  border:none;
+  padding:14px 28px;
+  font-size:16px;
+  border-radius:30px;
+  width:90%;
+  max-width:400px;
+}
+
+input[type=file]{display:none}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.9);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:100;
+}
+
+.modal img{
+  max-width:90%;
+  max-height:85%;
+  border-radius:12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="header-title">
+    <h1>Boda</h1>
+    <span>WhyNot!?</span>
+  </div>
+</div>
+
+<div style="text-align:center;margin:15px;">
+  <button onclick="startSlideshow()">🎞 Ver Slideshow</button>
+</div>
+
+<div id="gallery" class="gallery"></div>
+
+<div class="upload-bar">
+  <label class="upload-btn">
+    Subir foto
+    <input type="file" id="file" accept="image/*,video/*" capture>
+  </label>
+</div>
+
+<div id="modal" class="modal" onclick="stopSlideshow()">
+  <img id="modal-img">
+</div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbxpHT1rIpv7Kx1Fx4BGw4hi7ynO6m6nMPOTcd_oO4ULhE-EvZAyeUYPxeKA0tGmi10X/exec";
+
+const gallery = document.getElementById("gallery");
+const input = document.getElementById("file");
+const modal = document.getElementById("modal");
+const modalImg = document.getElementById("modal-img");
+
+let itemsGlobal=[];
+let slideInterval=null;
+
+/* CARGA GALERÍA (SOLO CUANDO SE NECESITA) */
+async function loadGallery(){
+  const res = await fetch(API);
+  const items = await res.json();
+  itemsGlobal = items;
+
+  gallery.innerHTML="";
+
+  items.reverse().forEach(item=>{
+    const card=document.createElement("div");
+    card.className="card";
+
+    const img=document.createElement("img");
+    img.src=item.url;
+    img.loading="lazy";
+    img.onclick=()=>openModal(item.url);
+
+    const actions=document.createElement("div");
+    actions.className="actions";
+
+    actions.innerHTML=`
+      <div>❤️ ${item.likes}</div>
+      <div>
+        <button onclick="like('${item.id}')">❤️</button>
+        <button onclick="share('${item.url}')">🔗</button>
+        <a href="${item.url}" download>⬇</a>
+      </div>
+    `;
+
+    card.appendChild(img);
+    card.appendChild(actions);
+
+    item.comments.forEach(c=>{
+      const p=document.createElement("div");
+      p.className="comment";
+      p.textContent=c.text;
+      card.appendChild(p);
+    });
+
+    const inputComment=document.createElement("input");
+    inputComment.className="comment-input";
+    inputComment.placeholder="Escribe comentario...";
+
+    const btn=document.createElement("button");
+    btn.textContent="Enviar";
+    btn.onclick=()=>comment(item.id,inputComment.value);
+
+    card.appendChild(inputComment);
+    card.appendChild(btn);
+
+    gallery.appendChild(card);
+  });
+}
+
+loadGallery();
+
+/* SUBIDA */
+input.onchange=async()=>{
+  const file=input.files[0];
+  if(!file) return;
+
+  const reader=new FileReader();
+  reader.onload=async()=>{
+    const base64=reader.result.split(",")[1];
+    const data=new URLSearchParams();
+    data.append("action","upload");
+    data.append("file",base64);
+    data.append("name",file.name);
+    data.append("type",file.type);
+
+    await fetch(API,{method:"POST",body:data});
+    loadGallery();
+  };
+  reader.readAsDataURL(file);
+};
+
+/* LIKE */
+async function like(id){
+  await fetch(API,{
+    method:"POST",
+    body:new URLSearchParams({action:"like",id})
+  });
+  loadGallery();
+}
+
+/* COMMENT */
+async function comment(id,text){
+  if(!text) return;
+  await fetch(API,{
+    method:"POST",
+    body:new URLSearchParams({action:"comment",id,text})
+  });
+  loadGallery();
+}
+
+/* SHARE UNIVERSAL */
+function share(url){
+  if(navigator.share){
+    navigator.share({
+      title:"Boda WhyNot!?",
+      text:"Mira esta foto 😍",
+      url:url
+    });
+  }else{
+    navigator.clipboard.writeText(url);
+    alert("Enlace copiado");
+  }
+}
+
+/* MODAL */
+function openModal(url){
+  modal.style.display="flex";
+  modalImg.src=url;
+}
+
+function stopSlideshow(){
+  clearInterval(slideInterval);
+  modal.style.display="none";
+}
+
+/* SLIDESHOW SOLO MANUAL */
+function startSlideshow(){
+  if(!itemsGlobal.length) return;
+
+  let index=0;
+  modal.style.display="flex";
+
+  slideInterval=setInterval(()=>{
+    modalImg.src=itemsGlobal[index].url;
+    index=(index+1)%itemsGlobal.length;
+  },3000);
+}
+</script>
+
+</body>
+</html>
