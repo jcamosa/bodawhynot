@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Boda WhyNot!?</title>
+
+<style>
+:root {
+  --bg-color: #fafafa;
+  --card-bg: #ffffff;
+  --accent: #c6a76b; /* Dorado boda */
+  --text-main: #262626;
+  --text-sec: #8e8e8e;
+  --border: #efefef;
+  --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-stack);
+  background: var(--bg-color);
+  color: var(--text-main);
+  padding-bottom: 90px; /* Espacio para la barra fija */
+}
+
+/* HEADER ELEGANTE */
+.header {
+  position: relative;
+  height: 50vh;
+  overflow: hidden;
+  background-color: #333;
+  /* URL estable proporcionada */
+  background-image: url("https://drive.google.com/file/d/1E4ratQk8NRZY0BDu_mJm87vcpRBSxzOH/view?usp=sharing");
+  background-size: cover;
+  background-position: center;
+}
+
+.header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.6));
+}
+
+.header-title {
+  position: absolute;
+  bottom: 40px;
+  left: 20px;
+  color: white;
+  z-index: 2;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.header-title h1 {
+  font-weight: 300;
+  margin: 0;
+  font-size: 28px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.header-title span {
+  font-size: 42px;
+  font-family: "Georgia", serif; /* Toque clásico */
+  font-style: italic;
+  font-weight: 700;
+}
+
+/* GALERÍA TIPO FEED INSTAGRAM */
+.gallery {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 20px;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  /* En móvil, a veces se ve mejor sin bordes laterales tipo IG */
+  border-radius: 0; 
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 600px) {
+  .card {
+    border-radius: 8px;
+    border: 1px solid #dbdbdb;
+  }
+}
+
+/* IMAGEN CUADRADA / RESPONSIVE */
+.card-image-container {
+  width: 100%;
+  background: #f0f0f0;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.card img, .card video {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+/* ACCIONES (ICONOS) */
+.actions {
+  padding: 12px 16px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s;
+}
+
+.icon-btn:active {
+  transform: scale(0.9);
+}
+
+.icon-btn svg {
+  width: 26px;
+  height: 26px;
+  stroke: var(--text-main);
+  stroke-width: 1.8;
+  fill: none;
+}
+
+.icon-btn.liked svg {
+  fill: #ed4956;
+  stroke: #ed4956;
+}
+
+/* LIKES TEXTO */
+.likes-count {
+  padding: 8px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* COMENTARIOS */
+.comments-section {
+  padding: 0 16px 12px;
+}
+
+.comment {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.comment strong {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.add-comment-box {
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.comment-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+}
+
+.post-btn {
+  background: none;
+  border: none;
+  color: #0095f6; /* Azul Instagram */
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.comment-input:not(:placeholder-shown) + .post-btn {
+  opacity: 1;
+}
+
+/* BARRA INFERIOR DE ACCIÓN */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-top: 1px solid var(--border);
+  padding: 10px 20px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between; /* Separar botones */
+  align-items: center;
+  gap: 15px;
+  z-index: 90;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-primary, .btn-secondary {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: var(--text-main);
+  color: white;
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: var(--text-main);
+}
+
+input[type=file] { display: none; }
+
+/* MODAL / LIGHTBOX */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.modal img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* ANIMACIÓN CORAZONES FLOTANTES */
+.heart-floater {
+  position: absolute;
+  color: #ed4956;
+  font-size: 20px;
+  pointer-events: none;
+  animation: floatUp 1s ease-out forwards;
+  z-index: 999;
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="header-title">
+    <h1>Boda</h1>
+    <span>WhyNot!?</span>
+  </div>
+</div>
+
+<div id="gallery" class="gallery">
+  <p style="text-align:center; color:#999; margin-top:40px;">Cargando recuerdos...</p>
+</div>
+
+<div class="bottom-nav">
+  
+  <div class="nav-item">
+    <button class="btn-secondary" onclick="startSlideshow()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+        <line x1="7" y1="2" x2="7" y2="22"></line>
+        <line x1="17" y1="2" x2="17" y2="22"></line>
+        <line x1="2" y1="12" x2="22" y2="12"></line>
+        <line x1="2" y1="7" x2="7" y2="7"></line>
+        <line x1="2" y1="17" x2="7" y2="17"></line>
+        <line x1="17" y1="17" x2="22" y2="17"></line>
+        <line x1="17" y1="7" x2="22" y2="7"></line>
+      </svg>
+      Slideshow
+    </button>
+  </div>
+
+  <div class="nav-item">
+    <label class="btn-primary">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+        <circle cx="12" cy="13" r="4"></circle>
+      </svg>
+      Subir Foto
+      <input type="file" id="file" accept="image/*,video/*" capture>
+    </label>
+  </div>
+
+</div>
+
+<div id="modal" class="modal" onclick="stopSlideshow()">
+  <img id="modal-img">
+</div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbxpHT1rIpv7Kx1Fx4BGw4hi7ynO6m6nMPOTcd_oO4ULhE-EvZAyeUYPxeKA0tGmi10X/exec";
+
+const gallery = document.getElementById("gallery");
+const input = document.getElementById("file");
+const modal = document.getElementById("modal");
+const modalImg = document.getElementById("modal-img");
+
+let itemsGlobal = [];
+let slideInterval = null;
+
+/* GENERAR CORAZONES SVG */
+const heartSVG = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+const shareSVG = `<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>`;
+
+/* CARGA DE GALERÍA */
+async function loadGallery(){
+  try {
+    const res = await fetch(API);
+    const items = await res.json();
+    itemsGlobal = items;
+
+    gallery.innerHTML = "";
+
+    if(items.length === 0){
+      gallery.innerHTML = "<p style='text-align:center;padding:20px;'>Sé el primero en subir una foto 📸</p>";
+      return;
+    }
+
+    items.reverse().forEach(item => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      // 1. Imagen
+      const imgContainer = document.createElement("div");
+      imgContainer.className = "card-image-container";
+      const img = document.createElement("img");
+      img.src = item.url;
+      img.loading = "lazy";
+      img.onclick = () => openModal(item.url);
+      imgContainer.appendChild(img);
+
+      // 2. Acciones (Botones)
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      
+      const leftActions = document.createElement("div");
+      leftActions.className = "action-buttons";
+      
+      // Botón Like
+      const likeBtn = document.createElement("button");
+      likeBtn.className = "icon-btn";
+      likeBtn.innerHTML = heartSVG;
+      // Pasamos 'this' para saber coordenadas
+      likeBtn.onclick = (e) => handleLike(e, item.id);
+      
+      // Botón Share
+      const shareBtn = document.createElement("button");
+      shareBtn.className = "icon-btn";
+      shareBtn.innerHTML = shareSVG;
+      shareBtn.onclick = () => share(item.url);
+
+      leftActions.appendChild(likeBtn);
+      leftActions.appendChild(shareBtn);
+      
+      actions.appendChild(leftActions);
+
+      // 3. Contador Likes
+      const likesCount = document.createElement("div");
+      likesCount.className = "likes-count";
+      likesCount.id = `likes-${item.id}`;
+      // Si tiene likes, mostrar numero, si no, texto vacío u oculto
+      likesCount.textContent = item.likes > 0 ? `${item.likes} Me gusta` : "";
+
+      // 4. Comentarios (Lista)
+      const commentsSection = document.createElement("div");
+      commentsSection.className = "comments-section";
+      item.comments.forEach(c => {
+        const p = document.createElement("div");
+        p.className = "comment";
+        p.innerHTML = `<strong>Invitado:</strong> ${c.text}`;
+        commentsSection.appendChild(p);
+      });
+
+      // 5. Input Comentario
+      const addCommentBox = document.createElement("div");
+      addCommentBox.className = "add-comment-box";
+      
+      const inputComment = document.createElement("input");
+      inputComment.className = "comment-input";
+      inputComment.placeholder = "Añade un comentario...";
+      
+      const postBtn = document.createElement("button");
+      postBtn.className = "post-btn";
+      postBtn.textContent = "Publicar";
+      postBtn.onclick = () => comment(item.id, inputComment.value);
+
+      addCommentBox.appendChild(inputComment);
+      addCommentBox.appendChild(postBtn);
+
+      // Montaje final
+      card.appendChild(imgContainer);
+      card.appendChild(actions);
+      card.appendChild(likesCount);
+      card.appendChild(commentsSection);
+      card.appendChild(addCommentBox);
+
+      gallery.appendChild(card);
+    });
+  } catch (error) {
+    console.error("Error cargando galería:", error);
+    gallery.innerHTML = "<p style='text-align:center;'>Error de conexión.</p>";
+  }
+}
+
+loadGallery();
+
+/* SUBIR FOTO */
+input.onchange = async () => {
+  const file = input.files[0];
+  if(!file) return;
+
+  // Feedback visual simple
+  const label = document.querySelector(".btn-primary");
+  const originalText = label.innerHTML;
+  label.innerHTML = "Subiendo...";
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64 = reader.result.split(",")[1];
+    const data = new URLSearchParams();
+    data.append("action", "upload");
+    data.append("file", base64);
+    data.append("name", file.name);
+    data.append("type", file.type);
+
+    await fetch(API, {method: "POST", body: data});
+    
+    label.innerHTML = originalText;
+    loadGallery();
+  };
+  reader.readAsDataURL(file);
+};
+
+/* LIKE CON EFECTO DE CORAZONES */
+async function handleLike(event, id) {
+  const btn = event.currentTarget;
+  
+  // 1. Animación visual inmediata (rellenar corazón)
+  btn.classList.add("liked");
+  
+  // 2. Efecto corazones flotantes
+  spawnFloatingHearts(btn);
+
+  // 3. Actualizar contador visualmente (+1 temporal)
+  const countEl = document.getElementById(`likes-${id}`);
+  if(countEl) {
+    const current = parseInt(countEl.textContent) || 0;
+    countEl.textContent = `${current + 1} Me gusta`;
+  }
+
+  // 4. Llamada API
+  await fetch(API, {
+    method: "POST",
+    body: new URLSearchParams({action: "like", id})
+  });
+  
+  // No recargamos toda la galería para no cortar el rollo,
+  // pero si quisieras sincronizar datos reales: loadGallery();
+}
+
+/* FUNCIÓN SPAWN HEARTS */
+function spawnFloatingHearts(element) {
+  const rect = element.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top;
+
+  for (let i = 0; i < 5; i++) {
+    const heart = document.createElement("div");
+    heart.className = "heart-floater";
+    heart.textContent = "❤️";
+    
+    // Posición aleatoria cerca del botón
+    const randomX = (Math.random() - 0.5) * 40;
+    heart.style.left = `${centerX + randomX}px`;
+    heart.style.top = `${centerY}px`;
+    
+    // Velocidad y retraso aleatorios
+    heart.style.animationDuration = `${0.8 + Math.random() * 0.5}s`;
+    
+    document.body.appendChild(heart);
+
+    // Limpieza
+    setTimeout(() => {
+      heart.remove();
+    }, 1500);
+  }
+}
+
+/* COMENTAR */
+async function comment(id, text){
+  if(!text) return;
+  await fetch(API, {
+    method: "POST",
+    body: new URLSearchParams({action: "comment", id, text})
+  });
+  loadGallery();
+}
+
+/* COMPARTIR */
+function share(url){
+  if(navigator.share){
+    navigator.share({
+      title: "Boda WhyNot!?",
+      text: "¡Mira qué fotón de la boda! 😍",
+      url: url
+    });
+  } else {
+    navigator.clipboard.writeText(url);
+    alert("Enlace copiado al portapapeles");
+  }
+}
+
+/* SLIDESHOW Y MODAL */
+function openModal(url){
+  modal.style.display = "flex";
+  modalImg.src = url;
+}
+
+function stopSlideshow(){
+  clearInterval(slideInterval);
+  modal.style.display = "none";
+}
+
+function startSlideshow(){
+  if(!itemsGlobal.length) return alert("Aún no hay fotos");
+
+  let index = 0;
+  modal.style.display = "flex";
+  
+  // Mostrar primera imagen inmediatamente
+  modalImg.src = itemsGlobal[index].url;
+
+  slideInterval = setInterval(() => {
+    index = (index + 1) % itemsGlobal.length;
+    modalImg.src = itemsGlobal[index].url;
+  }, 3000);
+}
+</script>
+
+</body>
+</html>
