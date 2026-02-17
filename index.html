@@ -79,6 +79,7 @@ body {
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 @media (min-width: 600px) {
@@ -97,7 +98,8 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  position: relative; /* Importante para el icono de play */
+  position: relative;
+  overflow: hidden;
 }
 
 .card-media-container img, 
@@ -109,27 +111,29 @@ body {
   object-fit: contain;
 }
 
-/* ICONO PLAY OVERLAY */
+/* --- BOTÓN PLAY CORREGIDO --- */
 .play-overlay {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 50px;
-  height: 50px;
-  background: rgba(0,0,0,0.6);
+  width: 60px;
+  height: 60px;
+  background: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  pointer-events: none; /* Dejar pasar el click al video */
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  pointer-events: none; /* El click traspasa al video */
+  z-index: 10; /* Asegurar que esté encima */
+  border: 2px solid rgba(255,255,255,0.8);
 }
+
 .play-overlay svg {
   fill: white;
-  width: 24px;
-  height: 24px;
-  margin-left: 2px; /* Ajuste óptico */
+  width: 30px;
+  height: 30px;
+  margin-left: 4px; /* Ajuste óptico para centrar el triángulo */
 }
 
 /* ACCIONES */
@@ -395,7 +399,7 @@ let itemsGlobal = [];
 let slideInterval = null;
 let isSlideshowActive = false;
 
-/* ICONOS SVG */
+/* ICONOS */
 const heartSVG = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 const shareSVG = `<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>`;
 const playSVG = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
@@ -412,11 +416,10 @@ async function loadGallery(silent = false){
     const res = await fetch(API);
     let items = await res.json();
     
-    // ORDEN: Del más nuevo (ID mayor) al más antiguo
+    // ORDENACIÓN
     items.sort((a, b) => b.id - a.id);
 
     itemsGlobal = items;
-
     if(!silent) renderGallery(items);
     
   } catch (error) {
@@ -444,31 +447,33 @@ function renderGallery(items) {
       if (isVideo(item.url)) {
         // VIDEO
         mediaEl = document.createElement("video");
-        // TRUCO: Añadimos #t=0.1 para forzar el thumbnail del segundo 0.1
-        mediaEl.src = item.url + "#t=0.1";
-        // PRELOAD: Metadata carga solo la portada
-        mediaEl.preload = "metadata";
+        // Quitamos trucos de tiempo para mejorar compatibilidad
+        mediaEl.src = item.url; 
         
-        // No ponemos autoplay aquí para no saturar, el usuario tiene que dar click.
-        // Pero ponemos muted por si acaso el navegador decide pre-cargar algo.
+        // NO Autoplay en la galería (ahorra datos y evita errores)
         mediaEl.muted = true;
-        mediaEl.playsInline = true;
+        mediaEl.playsInline = true; 
+        
+        // El click abre el modal
+        mediaEl.onclick = (e) => { e.preventDefault(); openModal(item.url); };
 
-        // Añadimos overlay de PLAY para que se sepa que es video
+        mediaContainer.appendChild(mediaEl);
+
+        // AÑADIR BOTÓN PLAY
         const playOverlay = document.createElement("div");
         playOverlay.className = "play-overlay";
         playOverlay.innerHTML = playSVG;
-        
+        // El overlay debe ir DESPUES del video en el HTML para salir encima
         mediaContainer.appendChild(playOverlay);
-        mediaEl.onclick = (e) => { e.preventDefault(); openModal(item.url); };
+
       } else {
         // FOTO
         mediaEl = document.createElement("img");
         mediaEl.src = item.url;
         mediaEl.loading = "lazy";
         mediaEl.onclick = () => openModal(item.url);
+        mediaContainer.appendChild(mediaEl);
       }
-      mediaContainer.appendChild(mediaEl);
 
       // --- ACCIONES ---
       const actions = document.createElement("div");
@@ -484,7 +489,8 @@ function renderGallery(items) {
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
       shareBtn.innerHTML = shareSVG;
-      shareBtn.onclick = () => share(item.url);
+      // USAR NUEVA FUNCIÓN DE COMPARTIR ARCHIVO
+      shareBtn.onclick = () => shareFile(item.url);
 
       leftActions.appendChild(likeBtn);
       leftActions.appendChild(shareBtn);
@@ -585,7 +591,8 @@ input.onchange = async () => {
   reader.readAsDataURL(file);
 };
 
-function showToast() {
+function showToast(msg) {
+    toast.textContent = msg || "¡Foto subida correctamente! 🎉";
     toast.classList.add("show");
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
@@ -631,12 +638,46 @@ async function comment(id, name, text){
   loadGallery();
 }
 
-function share(url){
-  if(navigator.share){
-    navigator.share({title: "Boda WhyNot!?", text: "¡Mira esto! 😍", url: url});
-  } else {
-    navigator.clipboard.writeText(url);
-    showToast("Enlace copiado");
+/* --- FUNCIÓN COMPARTIR ARCHIVO REAL --- */
+async function shareFile(url) {
+  // Feedback visual de que se está preparando
+  showToast("Preparando envío... 📲");
+
+  try {
+    // 1. Descargamos la imagen/video como "Blob"
+    const response = await fetch(url);
+    const blob = await response.blob();
+    
+    // 2. Creamos un objeto File
+    // Determinamos extensión por el tipo MIME
+    const type = blob.type;
+    const ext = type.split("/")[1] || "jpg";
+    const file = new File([blob], `boda_whynot.${ext}`, { type: type });
+
+    // 3. Comprobamos si el navegador puede compartir archivos
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: "Boda WhyNot!?",
+        text: "¡Mira este recuerdo de la boda! 😍"
+      });
+    } else {
+      // Si no soporta archivos, fallback al link
+      throw new Error("No soporta archivos");
+    }
+  } catch (error) {
+    console.log("Fallback a link:", error);
+    // Si falla (por CORS o soporte), enviamos el link
+    if (navigator.share) {
+      navigator.share({
+        title: "Boda WhyNot!?",
+        text: "¡Mira este recuerdo! 😍",
+        url: url
+      });
+    } else {
+      navigator.clipboard.writeText(url);
+      showToast("Enlace copiado (no se pudo enviar archivo)");
+    }
   }
 }
 
@@ -653,9 +694,18 @@ function showMediaInModal(url) {
         const vid = document.createElement("video");
         vid.src = url;
         vid.autoplay = true;
-        // En presentación automática, muteamos. Si lo abre el usuario, sonido activado (muted=false)
-        vid.muted = isSlideshowActive; 
-        vid.controls = !isSlideshowActive; 
+        
+        // LÓGICA IMPORTANTE PARA VIDEOS:
+        if(isSlideshowActive) {
+            // Si es presentación automática: MUTEADO (para que el navegador deje reproducir)
+            vid.muted = true;
+            vid.controls = false;
+        } else {
+            // Si lo abre el usuario con click: CON SONIDO y CONTROLES
+            vid.muted = false; 
+            vid.controls = true; 
+        }
+        
         vid.playsInline = true;
         modalContent.appendChild(vid);
     } else {
