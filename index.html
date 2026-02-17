@@ -20,21 +20,36 @@ body{
 }
 
 /* HEADER */
-.header{
+/*.header{
   position:relative;
   height:55vh;
   overflow:hidden;
   background-image:url("https://drive.google.com/uc?export=view&id=1CROMf12csBQiNZiGvw4ZmSMU0yZT52oV");
   background-size:cover;
   background-position:center;
+}*/
+  
+.header{
+  position:relative;
+  height:55vh;
+  overflow:hidden;
+
+  /* Fallback por si falla la remota */
+  background:#333;
+
+  /* URL estable de Drive */
+  background-image:url("https://drive.google.com/file/d/1E4ratQk8NRZY0BDu_mJm87vcpRBSxzOH/view?usp=sharing");
+  background-size:cover;
+  background-position:center;
 }
 
-/*.header::after{
+
+.header::after{
   content:"";
   position:absolute;
   inset:0;
   background:rgba(0,0,0,0.35);
-}*/
+}
 
 .header-title{
   position:absolute;
@@ -319,6 +334,7 @@ function startSlideshow(){
 
 </body>
 </html>
+
 
 
 
