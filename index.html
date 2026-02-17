@@ -88,6 +88,7 @@ body {
   }
 }
 
+/* CONTENEDOR MULTIMEDIA */
 .card-media-container {
   width: 100%;
   background: #000;
@@ -96,7 +97,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  position: relative;
+  position: relative; /* Importante para el icono de play */
 }
 
 .card-media-container img, 
@@ -106,6 +107,29 @@ body {
   max-height: 600px;
   display: block;
   object-fit: contain;
+}
+
+/* ICONO PLAY OVERLAY */
+.play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none; /* Dejar pasar el click al video */
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+.play-overlay svg {
+  fill: white;
+  width: 24px;
+  height: 24px;
+  margin-left: 2px; /* Ajuste óptico */
 }
 
 /* ACCIONES */
@@ -371,8 +395,10 @@ let itemsGlobal = [];
 let slideInterval = null;
 let isSlideshowActive = false;
 
+/* ICONOS SVG */
 const heartSVG = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 const shareSVG = `<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>`;
+const playSVG = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
 
 /* DETECTOR DE VIDEO */
 function isVideo(url) {
@@ -386,8 +412,7 @@ async function loadGallery(silent = false){
     const res = await fetch(API);
     let items = await res.json();
     
-    // ORDEN: Forzamos ordenación por ID descendente (ID más alto = más nuevo)
-    // Esto es más seguro que .reverse()
+    // ORDEN: Del más nuevo (ID mayor) al más antiguo
     items.sort((a, b) => b.id - a.id);
 
     itemsGlobal = items;
@@ -411,20 +436,33 @@ function renderGallery(items) {
       const card = document.createElement("div");
       card.className = "card";
 
-      // MEDIA
+      // --- CONTENIDO MULTIMEDIA ---
       const mediaContainer = document.createElement("div");
       mediaContainer.className = "card-media-container";
       
       let mediaEl;
       if (isVideo(item.url)) {
+        // VIDEO
         mediaEl = document.createElement("video");
-        mediaEl.src = item.url;
-        mediaEl.autoplay = true;
+        // TRUCO: Añadimos #t=0.1 para forzar el thumbnail del segundo 0.1
+        mediaEl.src = item.url + "#t=0.1";
+        // PRELOAD: Metadata carga solo la portada
+        mediaEl.preload = "metadata";
+        
+        // No ponemos autoplay aquí para no saturar, el usuario tiene que dar click.
+        // Pero ponemos muted por si acaso el navegador decide pre-cargar algo.
         mediaEl.muted = true;
-        mediaEl.loop = true;
         mediaEl.playsInline = true;
+
+        // Añadimos overlay de PLAY para que se sepa que es video
+        const playOverlay = document.createElement("div");
+        playOverlay.className = "play-overlay";
+        playOverlay.innerHTML = playSVG;
+        
+        mediaContainer.appendChild(playOverlay);
         mediaEl.onclick = (e) => { e.preventDefault(); openModal(item.url); };
       } else {
+        // FOTO
         mediaEl = document.createElement("img");
         mediaEl.src = item.url;
         mediaEl.loading = "lazy";
@@ -432,7 +470,7 @@ function renderGallery(items) {
       }
       mediaContainer.appendChild(mediaEl);
 
-      // ACCIONES
+      // --- ACCIONES ---
       const actions = document.createElement("div");
       actions.className = "actions";
       const leftActions = document.createElement("div");
@@ -452,13 +490,13 @@ function renderGallery(items) {
       leftActions.appendChild(shareBtn);
       actions.appendChild(leftActions);
 
-      // LIKES
+      // --- LIKES ---
       const likesCount = document.createElement("div");
       likesCount.className = "likes-count";
       likesCount.id = `likes-${item.id}`;
       likesCount.textContent = item.likes > 0 ? `${item.likes} Me gusta` : "";
 
-      // COMENTARIOS
+      // --- COMENTARIOS ---
       const commentsSection = document.createElement("div");
       commentsSection.className = "comments-section";
       item.comments.forEach(c => {
@@ -475,7 +513,7 @@ function renderGallery(items) {
         commentsSection.appendChild(p);
       });
 
-      // INPUTS
+      // --- INPUTS ---
       const addCommentBox = document.createElement("div");
       addCommentBox.className = "add-comment-box";
       const inputRow = document.createElement("div");
@@ -615,7 +653,7 @@ function showMediaInModal(url) {
         const vid = document.createElement("video");
         vid.src = url;
         vid.autoplay = true;
-        // Muteado si es slideshow automático para no asustar
+        // En presentación automática, muteamos. Si lo abre el usuario, sonido activado (muted=false)
         vid.muted = isSlideshowActive; 
         vid.controls = !isSlideshowActive; 
         vid.playsInline = true;
