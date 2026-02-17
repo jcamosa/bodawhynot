@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Boda WhyNot!?</title>
+
+<style>
+:root {
+  --bg-color: #fafafa;
+  --card-bg: #ffffff;
+  --accent: #c6a76b;
+  --text-main: #262626;
+  --text-sec: #8e8e8e;
+  --border: #efefef;
+  --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-stack);
+  background: var(--bg-color);
+  color: var(--text-main);
+  padding-bottom: 90px;
+}
+
+/* HEADER CON IMAGEN ARREGLADA */
+.header {
+  position: relative;
+  height: 50vh;
+  overflow: hidden;
+  background-color: #333;
+  /* URL corregida */
+  background-image: url("https://raw.githubusercontent.com/jcamosa/bodawhynot/main/header.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+.header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.6));
+}
+
+.header-title {
+  position: absolute;
+  bottom: 40px;
+  left: 20px;
+  color: white;
+  z-index: 2;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.header-title h1 {
+  font-weight: 300;
+  margin: 0;
+  font-size: 28px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.header-title span {
+  font-size: 42px;
+  font-family: "Georgia", serif;
+  font-style: italic;
+  font-weight: 700;
+}
+
+/* GALERÍA */
+.gallery {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 20px;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 0; 
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 600px) {
+  .card {
+    border-radius: 8px;
+    border: 1px solid #dbdbdb;
+  }
+}
+
+.card-image-container {
+  width: 100%;
+  background: #f0f0f0;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.card img, .card video {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+/* ACCIONES */
+.actions {
+  padding: 12px 16px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s;
+}
+
+.icon-btn:active { transform: scale(0.9); }
+
+.icon-btn svg {
+  width: 26px;
+  height: 26px;
+  stroke: var(--text-main);
+  stroke-width: 1.8;
+  fill: none;
+}
+
+.icon-btn.liked svg {
+  fill: #ed4956;
+  stroke: #ed4956;
+}
+
+.likes-count {
+  padding: 8px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* COMENTARIOS */
+.comments-section {
+  padding: 0 16px 12px;
+}
+
+.comment {
+  font-size: 14px;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+/* INPUTS COMENTARIO Y NOMBRE */
+.add-comment-box {
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column; /* Cambiado a columna para apilar inputs */
+  gap: 8px;
+}
+
+.input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.name-input {
+  width: 30%;
+  border: 1px solid #ddd;
+  background: #f8f8f8;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 13px;
+  outline: none;
+}
+
+.comment-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  padding: 8px 0;
+}
+
+.post-btn {
+  background: none;
+  border: none;
+  color: #0095f6;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.5;
+  padding: 0 8px;
+}
+
+.comment-input:not(:placeholder-shown) + .post-btn { opacity: 1; }
+
+/* BARRA INFERIOR */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-top: 1px solid var(--border);
+  padding: 10px 20px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  z-index: 90;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-primary, .btn-secondary {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary { background: var(--text-main); color: white; }
+.btn-secondary { background: #f0f0f0; color: var(--text-main); }
+
+input[type=file] { display: none; }
+
+/* MODAL / LIGHTBOX */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.modal img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* TOAST NOTIFICATION (POPUP) */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.3s, top 0.3s;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.toast.show {
+  opacity: 1;
+  top: 40px;
+}
+
+/* ANIMACIÓN CORAZONES */
+.heart-floater {
+  position: absolute;
+  color: #ed4956;
+  font-size: 20px;
+  pointer-events: none;
+  animation: floatUp 1s ease-out forwards;
+  z-index: 999;
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="header-title">
+    <h1>Boda</h1>
+    <span>WhyNot!?</span>
+  </div>
+</div>
+
+<div id="gallery" class="gallery">
+  <p style="text-align:center; color:#999; margin-top:40px;">Cargando recuerdos...</p>
+</div>
+
+<div id="toast" class="toast">¡Foto subida correctamente! 🎉</div>
+
+<div class="bottom-nav">
+  
+  <div class="nav-item">
+    <button class="btn-secondary" onclick="startSlideshow()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+        <line x1="8" y1="21" x2="16" y2="21"></line>
+        <line x1="12" y1="17" x2="12" y2="21"></line>
+      </svg>
+      Presentación
+    </button>
+  </div>
+
+  <div class="nav-item">
+    <label class="btn-primary">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+        <circle cx="12" cy="13" r="4"></circle>
+      </svg>
+      Subir Foto
+      <input type="file" id="file" accept="image/*,video/*" capture>
+    </label>
+  </div>
+
+</div>
+
+<div id="modal" class="modal" onclick="stopSlideshow()">
+  <img id="modal-img">
+</div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbxpHT1rIpv7Kx1Fx4BGw4hi7ynO6m6nMPOTcd_oO4ULhE-EvZAyeUYPxeKA0tGmi10X/exec";
+
+const gallery = document.getElementById("gallery");
+const input = document.getElementById("file");
+const modal = document.getElementById("modal");
+const modalImg = document.getElementById("modal-img");
+const toast = document.getElementById("toast");
+
+let itemsGlobal = [];
+let slideInterval = null;
+let isSlideshowActive = false;
+
+/* GENERAR CORAZONES SVG */
+const heartSVG = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+const shareSVG = `<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>`;
+
+/* CARGA DE GALERÍA */
+async function loadGallery(silent = false){
+  try {
+    const res = await fetch(API);
+    const items = await res.json();
+    itemsGlobal = items; // Actualizamos la lista global para la presentación
+
+    // Si es una recarga silenciosa (polling), no repintamos todo para no molestar al usuario que hace scroll
+    // Solo repintamos si no es silenciosa
+    if(!silent) {
+        renderGallery(items);
+    }
+  } catch (error) {
+    console.error("Error cargando galería:", error);
+    if(!silent) gallery.innerHTML = "<p style='text-align:center;'>Error de conexión.</p>";
+  }
+}
+
+function renderGallery(items) {
+    gallery.innerHTML = "";
+    if(items.length === 0){
+      gallery.innerHTML = "<p style='text-align:center;padding:20px;'>Sé el primero en subir una foto 📸</p>";
+      return;
+    }
+
+    items.reverse().forEach(item => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      // 1. Imagen
+      const imgContainer = document.createElement("div");
+      imgContainer.className = "card-image-container";
+      const img = document.createElement("img");
+      img.src = item.url;
+      img.loading = "lazy";
+      img.onclick = () => openModal(item.url);
+      imgContainer.appendChild(img);
+
+      // 2. Acciones
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      const leftActions = document.createElement("div");
+      leftActions.className = "action-buttons";
+      
+      const likeBtn = document.createElement("button");
+      likeBtn.className = "icon-btn";
+      likeBtn.innerHTML = heartSVG;
+      likeBtn.onclick = (e) => handleLike(e, item.id);
+      
+      const shareBtn = document.createElement("button");
+      shareBtn.className = "icon-btn";
+      shareBtn.innerHTML = shareSVG;
+      shareBtn.onclick = () => share(item.url);
+
+      leftActions.appendChild(likeBtn);
+      leftActions.appendChild(shareBtn);
+      actions.appendChild(leftActions);
+
+      // 3. Likes
+      const likesCount = document.createElement("div");
+      likesCount.className = "likes-count";
+      likesCount.id = `likes-${item.id}`;
+      likesCount.textContent = item.likes > 0 ? `${item.likes} Me gusta` : "";
+
+      // 4. Comentarios
+      const commentsSection = document.createElement("div");
+      commentsSection.className = "comments-section";
+      item.comments.forEach(c => {
+        const p = document.createElement("div");
+        p.className = "comment";
+        // Si el texto tiene formato "Nombre: texto", lo separamos visualmente
+        if(c.text.includes(":")){
+            const parts = c.text.split(":");
+            const name = parts[0];
+            const msg = parts.slice(1).join(":");
+            p.innerHTML = `<strong>${name}:</strong> ${msg}`;
+        } else {
+            p.innerHTML = `<strong>Invitado:</strong> ${c.text}`;
+        }
+        commentsSection.appendChild(p);
+      });
+
+      // 5. Inputs (Nombre y Comentario)
+      const addCommentBox = document.createElement("div");
+      addCommentBox.className = "add-comment-box";
+
+      const inputRow = document.createElement("div");
+      inputRow.className = "input-row";
+      
+      const inputName = document.createElement("input");
+      inputName.className = "name-input";
+      inputName.type = "text";
+      inputName.placeholder = "Tu nombre";
+      // Recordar nombre localmente
+      const storedName = localStorage.getItem("guestName");
+      if(storedName) inputName.value = storedName;
+
+      const inputComment = document.createElement("input");
+      inputComment.className = "comment-input";
+      inputComment.placeholder = "Añade un comentario...";
+      
+      const postBtn = document.createElement("button");
+      postBtn.className = "post-btn";
+      postBtn.textContent = "Publicar";
+      postBtn.onclick = () => {
+          if(inputName.value) localStorage.setItem("guestName", inputName.value);
+          comment(item.id, inputName.value, inputComment.value);
+      };
+
+      inputRow.appendChild(inputName);
+      inputRow.appendChild(inputComment);
+      inputRow.appendChild(postBtn);
+      
+      addCommentBox.appendChild(inputRow);
+
+      card.appendChild(imgContainer);
+      card.appendChild(actions);
+      card.appendChild(likesCount);
+      card.appendChild(commentsSection);
+      card.appendChild(addCommentBox);
+
+      gallery.appendChild(card);
+    });
+}
+
+loadGallery();
+
+/* POLLING: Actualizar datos cada 15 seg para ver fotos nuevas de otros */
+setInterval(() => {
+    // Pedimos datos nuevos. 
+    // Si la presentación está activa, solo actualiza itemsGlobal (silent=true)
+    // Si la presentación NO está activa, actualizamos la vista de galería (podríamos hacerlo silent o no, pero refrescar el DOM entero puede ser molesto. 
+    // Lo mejor es cargar silent siempre para tener los datos, y si estamos en presentación se usarán.)
+    loadGallery(true); 
+}, 15000);
+
+
+/* SUBIR FOTO */
+input.onchange = async () => {
+  const file = input.files[0];
+  if(!file) return;
+
+  const label = document.querySelector(".btn-primary");
+  const originalText = label.innerHTML;
+  label.innerHTML = "Subiendo...";
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64 = reader.result.split(",")[1];
+    const data = new URLSearchParams();
+    data.append("action", "upload");
+    data.append("file", base64);
+    data.append("name", file.name);
+    data.append("type", file.type);
+
+    await fetch(API, {method: "POST", body: data});
+    
+    label.innerHTML = originalText;
+    showToast(); // POPUP DE CONFIRMACIÓN
+    loadGallery(); // Recarga para ver tu propia foto
+  };
+  reader.readAsDataURL(file);
+};
+
+/* MOSTRAR TOAST */
+function showToast() {
+    toast.classList.add("show");
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3000);
+}
+
+/* LIKE */
+async function handleLike(event, id) {
+  const btn = event.currentTarget;
+  btn.classList.add("liked");
+  spawnFloatingHearts(btn);
+
+  const countEl = document.getElementById(`likes-${id}`);
+  if(countEl) {
+    const current = parseInt(countEl.textContent) || 0;
+    countEl.textContent = `${current + 1} Me gusta`;
+  }
+
+  await fetch(API, {
+    method: "POST",
+    body: new URLSearchParams({action: "like", id})
+  });
+}
+
+function spawnFloatingHearts(element) {
+  const rect = element.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top;
+
+  for (let i = 0; i < 5; i++) {
+    const heart = document.createElement("div");
+    heart.className = "heart-floater";
+    heart.textContent = "❤️";
+    const randomX = (Math.random() - 0.5) * 40;
+    heart.style.left = `${centerX + randomX}px`;
+    heart.style.top = `${centerY}px`;
+    heart.style.animationDuration = `${0.8 + Math.random() * 0.5}s`;
+    document.body.appendChild(heart);
+    setTimeout(() => heart.remove(), 1500);
+  }
+}
+
+/* COMENTAR */
+async function comment(id, name, text){
+  if(!text) return;
+  
+  // Si hay nombre, lo pegamos al texto para que se guarde junto
+  const displayName = name.trim() || "Anónimo";
+  const finalPayload = `${displayName}: ${text}`;
+
+  await fetch(API, {
+    method: "POST",
+    body: new URLSearchParams({action: "comment", id, text: finalPayload})
+  });
+  loadGallery();
+}
+
+function share(url){
+  if(navigator.share){
+    navigator.share({title: "Boda WhyNot!?", text: "¡Mira qué fotón! 😍", url: url});
+  } else {
+    navigator.clipboard.writeText(url);
+    showToast("Enlace copiado");
+  }
+}
+
+/* PRESENTACIÓN RANDOM & AUTO-REFRESH */
+function openModal(url){
+  isSlideshowActive = false;
+  modal.style.display = "flex";
+  modalImg.src = url;
+}
+
+function stopSlideshow(){
+  clearInterval(slideInterval);
+  isSlideshowActive = false;
+  modal.style.display = "none";
+}
+
+function startSlideshow(){
+  if(!itemsGlobal.length) return alert("Aún no hay fotos");
+
+  isSlideshowActive = true;
+  modal.style.display = "flex";
+  
+  // Empezar con una al azar
+  changeRandomSlide();
+
+  slideInterval = setInterval(() => {
+    changeRandomSlide();
+  }, 4000); // 4 segundos por foto
+}
+
+function changeRandomSlide(){
+    // Siempre cogemos de itemsGlobal, que se actualiza solo en background
+    if(itemsGlobal.length > 0){
+        const randomIndex = Math.floor(Math.random() * itemsGlobal.length);
+        modalImg.src = itemsGlobal[randomIndex].url;
+    }
+}
+</script>
+
+</body>
+</html>
