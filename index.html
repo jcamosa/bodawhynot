@@ -225,44 +225,6 @@ body {
   display: block;
 }
 
-/* VIDEO PLACEHOLDER */
-.video-placeholder {
-  width: 100%;
-  height: 350px;
-  background: #000;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  position: relative;
-}
-.video-text {
-  margin-top: 15px;
-  font-weight: 500;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  font-size: 14px;
-}
-
-.play-icon {
-  width: 60px;
-  height: 60px;
-  background: rgba(255,255,255,0.2);
-  border: 2px solid white;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  backdrop-filter: blur(4px);
-}
-.play-icon svg {
-  fill: white;
-  width: 30px;
-  height: 30px;
-  margin-left: 4px;
-}
-
 /* ACCIONES */
 .actions {
   padding: 12px 16px 0;
@@ -417,23 +379,6 @@ input[type=file] { display: none; }
   object-fit: contain;
 }
 
-/* VIDEO WRAPPER */
-.video-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 800px;
-  height: 80vh; 
-  background: black;
-}
-.video-wrapper iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
 /* TOAST */
 .toast {
   position: fixed;
@@ -513,8 +458,8 @@ input[type=file] { display: none; }
         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
         <circle cx="12" cy="13" r="4"></circle>
       </svg>
-      Subir Foto/Video
-      <input type="file" id="file" accept="image/*,video/*">
+      Subir Foto
+      <input type="file" id="file" accept="image/*">
     </label>
   </div>
 </div>
@@ -525,8 +470,7 @@ input[type=file] { display: none; }
 
 <script>
 // --- CONFIGURACIÓN ---
-// IMPORTANTE: Si al desplegar de nuevo el Script cambió la URL, ponla aquí abajo.
-const API = "https://script.google.com/macros/s/AKfycbwj5OcGGnUPll13s9MxwFEjIeofe_CniatpOQ5q5WVYVQlppa4IxwWqrkguvVXLQd4G/exec";
+const API = "https://script.google.com/macros/s/AKfycbykQbkXTysZnDNFrs5yG3YIgt1iS8JiyXvpGaE1E6dYLRQvTIzE1dEf_DRrvy-yEchv/exec";
 
 /* REFERENCIAS DOM */
 const gallery = document.getElementById("gallery");
@@ -572,30 +516,15 @@ checkLogin();
 
 /* ICONOS */
 const heartSVG = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
-const shareSVG = `<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>`;
-const playSVG = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
-
-/* UTILIDADES */
-function isVideo(url) {
-  if(!url) return false;
-  return url.match(/\.(mp4|mov|webm|ogg)$/i) !== null || url.includes("/vid.mp4");
-}
-
-function getOptimizedImageUrl(url) {
-  return url; // Devolvemos la URL tal cual, el script ya envía el thumbnail
-}
-
-function getVideoPreviewUrl(url) {
-  let cleanUrl = url.replace("&/vid.mp4", "");
-  return cleanUrl.replace("/view", "/preview").replace("view?", "preview?");
-}
+// Icono de descarga/compartir actualizado
+const shareSVG = `<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
 
 /* CARGA DE DATOS */
 async function loadGallery(silent = false){
   try {
     const res = await fetch(API);
     let items = await res.json();
-    items.sort((a, b) => b.id - a.id); // Orden simple por ID
+    items.sort((a, b) => b.id - a.id); 
     itemsGlobal = items;
     if(!silent) renderGallery(items);
   } catch (error) {
@@ -604,7 +533,7 @@ async function loadGallery(silent = false){
 }
 
 function renderGallery(items) {
-    // 1. RECUPERAR LIKES DEL USUARIO DESDE LA MEMORIA DEL MOVIL
+    // 1. RECUPERAR LIKES
     const myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
 
     gallery.innerHTML = "";
@@ -614,10 +543,13 @@ function renderGallery(items) {
     }
 
     items.forEach(item => {
+      // Ignorar videos si quedaron en el backend (solo mostrar fotos)
+      if(item.url.includes("/vid.mp4")) return;
+
       const card = document.createElement("div");
       card.className = "card";
 
-      // HEADER CARTA
+      // HEADER
       const uploaderName = item.uploader || "Invitado";
       const initial = uploaderName.charAt(0).toUpperCase();
       
@@ -632,24 +564,17 @@ function renderGallery(items) {
       `;
       card.appendChild(headerDiv);
 
-      // MEDIA
+      // MEDIA (Solo Imagen)
       const mediaContainer = document.createElement("div");
       mediaContainer.className = "card-media-container";
-      mediaContainer.onclick = () => openModal(item.url, isVideo(item.url));
+      mediaContainer.onclick = () => openModal(item.url);
 
-      if (isVideo(item.url)) {
-        mediaContainer.innerHTML = `
-          <div class="video-placeholder">
-            <div class="play-icon">${playSVG}</div>
-            <div class="video-text">Ver Vídeo</div>
-          </div>
-        `;
-      } else {
-        const img = document.createElement("img");
-        img.src = item.url; 
-        img.loading = "lazy";
-        mediaContainer.appendChild(img);
-      }
+      const img = document.createElement("img");
+      img.src = item.url; 
+      img.loading = "lazy";
+      img.crossOrigin = "anonymous"; // Ayuda con la descarga
+      mediaContainer.appendChild(img);
+      
       card.appendChild(mediaContainer);
 
       // ACCIONES
@@ -658,17 +583,17 @@ function renderGallery(items) {
       const leftActions = document.createElement("div");
       leftActions.className = "action-buttons";
       
-      // LOGICA DE LIKES (Aplicar clase 'liked' si ya votó)
+      // LIKE
       const alreadyLiked = myLikes.includes(item.id);
-
       const likeBtn = document.createElement("button");
       likeBtn.className = "icon-btn" + (alreadyLiked ? " liked" : "");
       likeBtn.innerHTML = heartSVG;
       likeBtn.onclick = (e) => {
-          if (alreadyLiked) return; // Si ya votó, no hace nada
+          if (alreadyLiked) return; 
           handleLike(e, item.id);
       };
       
+      // SHARE / DOWNLOAD
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
       shareBtn.innerHTML = shareSVG;
@@ -768,17 +693,14 @@ function showToast(msg) {
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
-/* HANDLE LIKE (CON PERSISTENCIA) */
+/* HANDLE LIKE */
 async function handleLike(event, id) {
   const btn = event.currentTarget;
-  
   if(btn.classList.contains("liked")) return;
   
-  // Bloquear visualmente
   btn.classList.add("liked");
   spawnFloatingHearts(btn);
   
-  // Actualizar contador visualmente
   const countEl = document.getElementById(`likes-${id}`);
   if(countEl) {
     let text = countEl.textContent;
@@ -787,14 +709,12 @@ async function handleLike(event, id) {
     countEl.textContent = `${current + 1} Me gusta`;
   }
 
-  // GUARDAR EN MEMORIA DEL MÓVIL
   let myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
   if (!myLikes.includes(id)) {
       myLikes.push(id);
       localStorage.setItem("whynot_likes", JSON.stringify(myLikes));
   }
 
-  // ENVIAR AL BACKEND
   await fetch(API, {method: "POST", body: new URLSearchParams({action: "like", id: id})});
 }
 
@@ -825,48 +745,48 @@ async function comment(id, name, text){
   setTimeout(() => loadGallery(true), 1000);
 }
 
+/* --- LOGICA DE COMPARTIR MEJORADA --- */
 async function shareFile(url) {
-  showToast("Preparando envío... 📲");
+  showToast("Cargando imagen... 📲");
+  
   try {
+    // 1. Intentamos obtener la imagen como archivo blob
     const response = await fetch(url);
     const blob = await response.blob();
-    const type = blob.type;
-    const ext = type.split("/")[1] || "jpg";
-    const file = new File([blob], `boda_whynot.${ext}`, { type: type });
+    const file = new File([blob], "recuerdo_boda.jpg", { type: "image/jpeg" });
 
+    // 2. Si el navegador permite compartir ARCHIVOS (Móviles Android/iPhone)
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
         title: "Boda WhyNot!?",
         text: "¡Mira este recuerdo! 😍"
       });
-    } else { throw new Error("No soporta archivos"); }
-  } catch (error) {
-    if (navigator.share) {
-      navigator.share({ title: "Boda WhyNot!?", text: "¡Mira esto! 😍", url: url });
     } else {
-      navigator.clipboard.writeText(url);
-      showToast("Link copiado");
+      // 3. Fallback: Forzar descarga directa si no deja compartir
+      throw new Error("No soporta compartir archivos");
     }
+  } catch (error) {
+    // Si algo falla (ej: PC o navegador antiguo), abrimos la imagen para descargar
+    console.log("Fallback descarga manual");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "recuerdo_boda.jpg";
+    a.target = "_blank"; // Abrir en nueva pestaña si download falla
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast("Imagen descargada/abierta ⬇️");
   }
 }
 
-function openModal(url, isVideoContent){
+function openModal(url){
   isSlideshowActive = false;
   modal.style.display = "flex";
-  
-  if (isVideoContent) {
-    const previewUrl = getVideoPreviewUrl(url);
-    modalContent.innerHTML = `
-      <div class="video-wrapper">
-        <iframe src="${previewUrl}" allow="autoplay; fullscreen" allowfullscreen></iframe>
-      </div>`;
-  } else {
-    modalContent.innerHTML = "";
-    const img = document.createElement("img");
-    img.src = url; 
-    modalContent.appendChild(img);
-  }
+  modalContent.innerHTML = "";
+  const img = document.createElement("img");
+  img.src = url; 
+  modalContent.appendChild(img);
 }
 
 function stopSlideshow(){
@@ -888,20 +808,17 @@ function changeRandomSlide(){
   if(itemsGlobal.length > 0){
     const randomIndex = Math.floor(Math.random() * itemsGlobal.length);
     const item = itemsGlobal[randomIndex];
-    const isVid = isVideo(item.url);
     
-    if(isVid) {
-       const previewUrl = getVideoPreviewUrl(item.url);
-       modalContent.innerHTML = `
-        <div class="video-wrapper">
-          <iframe src="${previewUrl}" allow="autoplay; fullscreen"></iframe>
-        </div>`;
-    } else {
-       modalContent.innerHTML = "";
-       const img = document.createElement("img");
-       img.src = item.url; 
-       modalContent.appendChild(img);
+    // Ignorar videos en slideshow
+    if(item.url.includes("/vid.mp4")) {
+        changeRandomSlide();
+        return;
     }
+
+    modalContent.innerHTML = "";
+    const img = document.createElement("img");
+    img.src = item.url; 
+    modalContent.appendChild(img);
   }
 }
 </script>
