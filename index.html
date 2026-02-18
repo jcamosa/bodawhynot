@@ -521,8 +521,6 @@ function checkLogin() {
       loginOverlay.style.display = "flex";
     }
   } catch (e) {
-    // Si falla localStorage (modo incógnito estricto), pedimos login siempre
-    console.log("Error localStorage:", e);
     loginOverlay.style.display = "flex";
   }
 }
@@ -533,9 +531,7 @@ function saveUser() {
   
   try {
     localStorage.setItem("whynot_user", name);
-  } catch (e) {
-    console.log("No se pudo guardar en memoria, pero continuamos.");
-  }
+  } catch (e) {}
   
   currentUser = name;
   userTag.textContent = currentUser;
@@ -576,7 +572,6 @@ function renderGallery(items) {
     }
 
     items.forEach(item => {
-      // Ignorar videos si quedaron en el backend
       if(item.url.includes("/vid.mp4")) return;
 
       const card = document.createElement("div");
@@ -624,7 +619,7 @@ function renderGallery(items) {
           handleLike(e, item.id);
       };
       
-      // SHARE - Nueva lógica corregida
+      // SHARE - Optimizado con s1200 para velocidad
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
       shareBtn.innerHTML = shareSVG;
@@ -807,28 +802,25 @@ async function comment(id, name, text){
   setTimeout(() => loadGallery(true), 1000);
 }
 
-/* --- LOGICA DE COMPARTIR ROBUSTA CON URL SEGURA --- */
+/* --- LOGICA COMPARTIR OPTIMIZADA (S1200) --- */
 async function shareImage(url) {
   showToast("Preparando foto... 📲");
   
   try {
-    // 1. Obtener ID
     let id = "";
     if (url.includes("id=")) {
       id = url.split("id=")[1].split("&")[0];
     }
     
-    // 2. URL HTTPS Segura y Correcta
-    // Usamos el template literal correctamente con `${id}`
-    const fetchUrl = `https://lh3.googleusercontent.com/d/${id}=s3000`;
+    // Cambiado s3000 a s1200 para que sea RÁPIDO y genere PREVIEW en iPhone
+    const fetchUrl = `https://lh3.googleusercontent.com/d/${id}=s1200`;
 
-    // 3. Obtener el archivo (Blob)
     const response = await fetch(fetchUrl);
     if (!response.ok) throw new Error("Error red");
     const blob = await response.blob();
-    const file = new File([blob], "boda_whynot.jpg", { type: "image/jpeg" });
+    // Le ponemos nombre único para evitar caché de previsualización
+    const file = new File([blob], `boda_whynot_${id}.jpg`, { type: "image/jpeg" });
 
-    // 4. Compartir archivo
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
@@ -841,7 +833,6 @@ async function shareImage(url) {
 
   } catch (error) {
     console.error("Error share:", error);
-    // Fallback elegante
     if (navigator.share) {
        navigator.share({
          title: "Boda WhyNot!?",
