@@ -12,7 +12,7 @@
   --text-main: #262626;
   --text-light: #8e8e8e;
   --border: #efefef;
-  --accent: #c6a76b; /* Dorado */
+  --accent: #c6a76b;
   --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -185,11 +185,25 @@ body {
   width: 66px;
   height: 66px;
   border-radius: 50%;
-  padding: 2px;
-  background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); /* Gold */
+  padding: 3px; /* Un pelín más grueso para el metal */
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* PODIUM COLORS */
+.story-ring.gold {
+  background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+  box-shadow: 0 0 8px rgba(191, 149, 63, 0.4);
+}
+.story-ring.silver {
+  background: linear-gradient(45deg, #9c9c9c, #ffffff, #c0c0c0, #eaeaea, #7f7f7f);
+}
+.story-ring.bronze {
+  background: linear-gradient(45deg, #804a00, #dcb183, #cd7f32, #b06b28);
+}
+.story-ring.black {
+  background: linear-gradient(45deg, #444, #000);
 }
 
 .story-img {
@@ -482,7 +496,7 @@ input[type=file] { display: none; }
   justify-content: center;
   align-items: center;
   z-index: 100;
-  overflow-y: auto; /* Para scroll si la tarjeta es larga */
+  overflow-y: auto; 
   padding: 20px;
   box-sizing: border-box;
 }
@@ -496,7 +510,6 @@ input[type=file] { display: none; }
   align-items: center;
 }
 
-/* Estilo específico para cuando el modal es una tarjeta completa */
 .modal-card {
   background: white;
   width: 100%;
@@ -506,21 +519,12 @@ input[type=file] { display: none; }
   display: flex;
   flex-direction: column;
   position: relative;
-  max-height: 90vh; /* Limitar altura */
+  max-height: 90vh;
   animation: scaleIn 0.2s ease-out;
 }
-
-.modal-card .card-media-container {
-    background: #000;
-}
-.modal-card .card-media-container img {
-    max-height: 60vh; /* Para que quepa el resto */
-}
-.modal-card .comments-section {
-    overflow-y: auto; /* Scroll en comentarios */
-    flex: 1;
-    max-height: 200px; 
-}
+.modal-card .card-media-container { background: #000; }
+.modal-card .card-media-container img { max-height: 60vh; }
+.modal-card .comments-section { overflow-y: auto; flex: 1; max-height: 200px; }
 
 @keyframes scaleIn {
   from { transform: scale(0.9); opacity: 0; }
@@ -708,7 +712,7 @@ async function loadGallery(silent = false){
     const res = await fetch(API);
     let items = await res.json();
     
-    // Ordenar por ID para el feed
+    // Ordenar por ID para el feed (más reciente primero)
     items.sort((a, b) => b.id - a.id); 
     itemsGlobal = items;
     
@@ -725,6 +729,7 @@ async function loadGallery(silent = false){
 function renderStories(items) {
     storiesContainer.innerHTML = "";
     const photos = items.filter(i => !i.url.includes("/vid.mp4"));
+    // Ordenar por Likes para el ranking
     const ranking = [...photos].sort((a, b) => b.likes - a.likes);
     const top5 = ranking.slice(0, 5);
 
@@ -741,8 +746,14 @@ function renderStories(items) {
         el.className = "story-item";
         el.onclick = () => openFullPost(item);
 
+        // DETERMINAR EL COLOR DEL ANILLO (METAL)
+        let ringClass = "black"; // Por defecto (4º y 5º)
+        if (index === 0) ringClass = "gold";
+        else if (index === 1) ringClass = "silver";
+        else if (index === 2) ringClass = "bronze";
+
         el.innerHTML = `
-            <div class="story-ring gold">
+            <div class="story-ring ${ringClass}">
                 <img class="story-img" src="${item.url}" loading="lazy">
             </div>
             <div class="story-rank">${index + 1}</div>
@@ -777,7 +788,7 @@ function createCardElement(item, myLikes, isModal = false) {
       // HEADER
       const uploaderName = item.uploader || "Invitado";
       const initial = uploaderName.charAt(0).toUpperCase();
-      const timeAgoStr = timeAgo(item.timestamp); // Hora subida foto
+      const timeAgoStr = timeAgo(item.timestamp); 
 
       const headerDiv = document.createElement("div");
       headerDiv.className = "card-header";
@@ -886,12 +897,10 @@ function createCardElement(item, myLikes, isModal = false) {
           if(!text) return;
           
           const fullText = `${currentUser}: ${text}`;
-          const now = new Date(); // Hora local inmediata
+          const now = new Date(); 
           
-          // 1. Mostrar ya (Optimista)
           appendComment(commentsSection, {text: fullText, time: now});
           
-          // 2. Actualizar array local
           const globalItem = itemsGlobal.find(i => i.id === item.id);
           if(globalItem) {
               if(!globalItem.comments) globalItem.comments = [];
@@ -912,7 +921,7 @@ function createCardElement(item, myLikes, isModal = false) {
 
 function appendComment(container, c) {
     if(!c.text) return;
-    const timeStr = timeAgo(c.time); // "Hace 5 min"
+    const timeStr = timeAgo(c.time); 
 
     const p = document.createElement("div");
     p.className = "comment";
