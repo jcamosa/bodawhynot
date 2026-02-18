@@ -149,16 +149,26 @@ body {
 }
 
 /* --- STORIES RANKING --- */
+.stories-title {
+  padding: 15px 15px 5px;
+  background: white;
+  font-weight: 700;
+  font-size: 14px;
+  color: #c6a76b; /* Dorado */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 .stories-wrapper {
   background: #fff;
   border-bottom: 1px solid #efefef;
-  padding: 15px 0 15px 15px;
+  padding: 10px 0 15px 15px;
   display: flex;
   overflow-x: auto;
   gap: 15px;
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none; 
 }
-.stories-wrapper::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+.stories-wrapper::-webkit-scrollbar { display: none; } 
 
 .story-item {
   display: flex;
@@ -175,14 +185,10 @@ body {
   height: 66px;
   border-radius: 50%;
   padding: 2px;
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); /* Gold */
   display: flex;
   justify-content: center;
   align-items: center;
-}
-/* Dorado para el ranking */
-.story-ring.gold {
-  background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
 }
 
 .story-img {
@@ -456,6 +462,9 @@ input[type=file] { display: none; }
   justify-content: center;
   align-items: center;
   z-index: 100;
+  overflow-y: auto; /* Para scroll si la tarjeta es larga */
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .modal-content {
@@ -465,6 +474,37 @@ input[type=file] { display: none; }
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+/* Estilo específico para cuando el modal es una tarjeta completa */
+.modal-card {
+  background: white;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  max-height: 90vh; /* Limitar altura */
+  animation: scaleIn 0.2s ease-out;
+}
+
+.modal-card .card-media-container {
+    background: #000;
+}
+.modal-card .card-media-container img {
+    max-height: 60vh; /* Para que quepa el resto */
+}
+.modal-card .comments-section {
+    overflow-y: auto; /* Scroll en comentarios */
+    flex: 1;
+    max-height: 200px; 
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 .modal img {
@@ -500,7 +540,7 @@ input[type=file] { display: none; }
   font-size: 20px;
   pointer-events: none;
   animation: floatUp 1s ease-out forwards;
-  z-index: 999;
+  z-index: 2000;
 }
 @keyframes floatUp {
   0% { transform: translateY(0) scale(1); opacity: 1; }
@@ -528,6 +568,7 @@ input[type=file] { display: none; }
   </div>
 </div>
 
+<div class="stories-title">🏆 Top 5 - Más Votados</div>
 <div id="stories" class="stories-wrapper">
   </div>
 
@@ -561,7 +602,7 @@ input[type=file] { display: none; }
   </div>
 </div>
 
-<div id="modal" class="modal" onclick="stopSlideshow()">
+<div id="modal" class="modal" onclick="closeModalDirect(event)">
   <div id="modal-content" class="modal-content"></div>
 </div>
 
@@ -629,7 +670,7 @@ async function loadGallery(silent = false){
     const res = await fetch(API);
     let items = await res.json();
     
-    // Ordenar por ID (tiempo) para el feed normal
+    // Ordenar por ID para el feed
     items.sort((a, b) => b.id - a.id); 
     itemsGlobal = items;
     
@@ -645,26 +686,23 @@ async function loadGallery(silent = false){
 /* --- RENDER STORIES (RANKING) --- */
 function renderStories(items) {
     storiesContainer.innerHTML = "";
-    
-    // Filtramos solo fotos (no videos)
     const photos = items.filter(i => !i.url.includes("/vid.mp4"));
-    
-    // Ordenamos por likes (descendente)
     const ranking = [...photos].sort((a, b) => b.likes - a.likes);
-    
-    // Cogemos el Top 5
     const top5 = ranking.slice(0, 5);
 
     if(top5.length === 0) {
+        document.querySelector('.stories-title').style.display = "none";
         storiesContainer.style.display = "none";
         return;
     }
+    document.querySelector('.stories-title').style.display = "block";
     storiesContainer.style.display = "flex";
 
     top5.forEach((item, index) => {
         const el = document.createElement("div");
         el.className = "story-item";
-        el.onclick = () => openModal(item.url); // Al hacer clic, abre la foto grande
+        // AL PULSAR, ABRE LA TARJETA COMPLETA
+        el.onclick = () => openFullPost(item);
 
         el.innerHTML = `
             <div class="story-ring gold">
@@ -677,12 +715,9 @@ function renderStories(items) {
     });
 }
 
-
 function renderGallery(items) {
     let myLikes = [];
-    try {
-        myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
-    } catch(e) {}
+    try { myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]"); } catch(e) {}
 
     gallery.innerHTML = "";
     if(items.length === 0){
@@ -693,8 +728,15 @@ function renderGallery(items) {
     items.forEach(item => {
       if(item.url.includes("/vid.mp4")) return;
 
+      const card = createCardElement(item, myLikes);
+      gallery.appendChild(card);
+    });
+}
+
+// FUNCIÓN GENERADORA DE TARJETAS (REUTILIZABLE)
+function createCardElement(item, myLikes, isModal = false) {
       const card = document.createElement("div");
-      card.className = "card";
+      card.className = isModal ? "modal-card" : "card";
 
       // HEADER
       const uploaderName = item.uploader || "Invitado";
@@ -714,7 +756,11 @@ function renderGallery(items) {
       // MEDIA 
       const mediaContainer = document.createElement("div");
       mediaContainer.className = "card-media-container";
-      mediaContainer.onclick = () => openModal(item.url);
+      
+      // Si ya es modal, no hace nada al clickar la imagen
+      if(!isModal) {
+         mediaContainer.onclick = () => openSimpleModal(item.url);
+      }
 
       const img = document.createElement("img");
       img.src = item.url; 
@@ -733,9 +779,12 @@ function renderGallery(items) {
       const likeBtn = document.createElement("button");
       likeBtn.className = "icon-btn" + (alreadyLiked ? " liked" : "");
       likeBtn.innerHTML = heartSVG;
-      likeBtn.onclick = (e) => handleLike(e, item.id);
+      // IMPORTANTE: ID único si es modal para que no choque con el feed
+      const likeCountId = isModal ? `likes-modal-${item.id}` : `likes-${item.id}`;
       
-      // SHARE - CALIDAD ORIGINAL
+      likeBtn.onclick = (e) => handleLike(e, item.id, likeCountId);
+      
+      // SHARE
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
       shareBtn.innerHTML = shareSVG;
@@ -749,7 +798,7 @@ function renderGallery(items) {
       // CONTADOR LIKES
       const likesCount = document.createElement("div");
       likesCount.className = "likes-count";
-      likesCount.id = `likes-${item.id}`;
+      likesCount.id = likeCountId; // ID dinámico
       if (item.likes > 0) {
           likesCount.textContent = `${item.likes} Me gusta`;
       } else {
@@ -761,34 +810,38 @@ function renderGallery(items) {
       const commentsSection = document.createElement("div");
       commentsSection.className = "comments-section";
       
-      const total = item.comments.length;
-      const LIMIT = 3;
-
-      if (total > LIMIT) {
-         const btnMore = document.createElement("button");
-         btnMore.className = "view-more-comments";
-         btnMore.textContent = `Ver los ${total} comentarios...`;
-         
-         const hiddenDiv = document.createElement("div");
-         hiddenDiv.className = "hidden-comments";
-         
-         const hiddenComments = item.comments.slice(0, total - LIMIT);
-         hiddenComments.forEach(c => appendComment(hiddenDiv, c));
-
-         const visibleComments = item.comments.slice(total - LIMIT, total);
-         
-         commentsSection.appendChild(btnMore);
-         commentsSection.appendChild(hiddenDiv);
-         visibleComments.forEach(c => appendComment(commentsSection, c));
-
-         btnMore.onclick = () => {
-             hiddenDiv.style.display = "block";
-             btnMore.style.display = "none";
-         };
+      if (isModal) {
+          // En modal, mostramos TODOS
+          item.comments.forEach(c => appendComment(commentsSection, c));
       } else {
-         item.comments.forEach(c => appendComment(commentsSection, c));
-      }
+          // En feed, lógica de ocultar
+          const total = item.comments.length;
+          const LIMIT = 3;
+          if (total > LIMIT) {
+             const btnMore = document.createElement("button");
+             btnMore.className = "view-more-comments";
+             btnMore.textContent = `Ver los ${total} comentarios...`;
+             
+             const hiddenDiv = document.createElement("div");
+             hiddenDiv.className = "hidden-comments";
+             
+             const hiddenComments = item.comments.slice(0, total - LIMIT);
+             hiddenComments.forEach(c => appendComment(hiddenDiv, c));
 
+             const visibleComments = item.comments.slice(total - LIMIT, total);
+             
+             commentsSection.appendChild(btnMore);
+             commentsSection.appendChild(hiddenDiv);
+             visibleComments.forEach(c => appendComment(commentsSection, c));
+
+             btnMore.onclick = () => {
+                 hiddenDiv.style.display = "block";
+                 btnMore.style.display = "none";
+             };
+          } else {
+             item.comments.forEach(c => appendComment(commentsSection, c));
+          }
+      }
       card.appendChild(commentsSection);
 
       // INPUT
@@ -805,17 +858,21 @@ function renderGallery(items) {
       postBtn.onclick = () => {
           comment(item.id, currentUser, inputComment.value);
           inputComment.value = "";
+          // Si estamos en modal, añadimos el comentario visualmente ya
+          if(isModal) {
+             appendComment(commentsSection, {text: `${currentUser}: ${inputComment.value}`});
+          }
       };
 
       addCommentBox.appendChild(inputComment);
       addCommentBox.appendChild(postBtn);
       card.appendChild(addCommentBox);
-
-      gallery.appendChild(card);
-    });
+      
+      return card;
 }
 
 function appendComment(container, c) {
+    if(!c.text) return;
     const p = document.createElement("div");
     p.className = "comment";
     if(c.text.includes(":")){
@@ -830,7 +887,7 @@ function appendComment(container, c) {
 }
 
 loadGallery();
-setInterval(() => { loadGallery(true); }, 15000);
+setInterval(() => { if(!isSlideshowActive) loadGallery(true); }, 15000);
 
 /* UPLOAD */
 input.onchange = async () => {
@@ -866,18 +923,18 @@ function showToast(msg) {
 }
 
 /* HANDLE LIKE/UNLIKE */
-async function handleLike(event, id) {
+async function handleLike(event, id, countElementId) {
   const btn = event.currentTarget;
-  const countEl = document.getElementById(`likes-${id}`);
+  // Buscamos el contador específico (sea modal o feed)
+  const countEl = document.getElementById(countElementId); 
+  
   let current = 0;
   if(countEl && countEl.textContent !== "Sé el primero en dar Like") {
       current = parseInt(countEl.textContent);
   }
 
   let myLikes = [];
-  try {
-     myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
-  } catch(e){}
+  try { myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]"); } catch(e){}
 
   if (btn.classList.contains("liked")) {
       // UNLIKE
@@ -929,16 +986,15 @@ async function comment(id, name, text){
     method: "POST",
     body: new URLSearchParams({action: "comment", id, text: `${displayName}: ${text}`})
   });
-  setTimeout(() => loadGallery(true), 1000);
+  // Recargar un poco después
+  setTimeout(() => loadGallery(true), 1500);
 }
 
-/* --- COMPARTIR ARREGLADO (FEEDBACK INMEDIATO) --- */
+/* --- COMPARTIR ARREGLADO (FEEDBACK) --- */
 async function shareImage(event, url) {
-  // Evitar doble click visual: deshabilitar botón temporalmente
   const btn = event.currentTarget;
   if(btn.disabled) return;
   
-  // Feedback inmediato
   btn.style.opacity = "0.5";
   showToast("Preparando foto... 📲");
   btn.disabled = true;
@@ -948,7 +1004,6 @@ async function shareImage(event, url) {
     if (url.includes("id=")) {
       id = url.split("id=")[1].split("&")[0];
     }
-    
     const fetchUrl = `https://lh3.googleusercontent.com/d/${id}=s0`;
 
     const response = await fetch(fetchUrl);
@@ -969,29 +1024,46 @@ async function shareImage(event, url) {
   } catch (error) {
     console.error("Error share:", error);
     if (navigator.share) {
-       navigator.share({
-         title: "Boda WhyNot!?",
-         text: "¡Mira esta foto! 😍 " + url
-       });
+       navigator.share({ title: "Boda WhyNot!?", text: "¡Mira esta foto! 😍 " + url });
     } else {
        window.open(url, "_blank");
     }
   } finally {
-      // Reactivar botón tras unos segundos
-      setTimeout(() => {
-          btn.disabled = false;
-          btn.style.opacity = "1";
-      }, 2000);
+      setTimeout(() => { btn.disabled = false; btn.style.opacity = "1"; }, 2000);
   }
 }
 
-function openModal(url){
+/* --- MODALES --- */
+
+// Modal Simple (Solo imagen, para el feed)
+function openSimpleModal(url){
   isSlideshowActive = false;
   modal.style.display = "flex";
   modalContent.innerHTML = "";
   const img = document.createElement("img");
   img.src = url; 
   modalContent.appendChild(img);
+}
+
+// Modal Completo (Tarjeta, para el ranking)
+function openFullPost(item) {
+    isSlideshowActive = false;
+    modal.style.display = "flex";
+    modalContent.innerHTML = "";
+    
+    let myLikes = [];
+    try { myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]"); } catch(e) {}
+    
+    // Crear tarjeta completa
+    const card = createCardElement(item, myLikes, true);
+    modalContent.appendChild(card);
+}
+
+// Cerrar al clickar fuera
+function closeModalDirect(event) {
+    if (event.target === modal) {
+        stopSlideshow();
+    }
 }
 
 function stopSlideshow(){
