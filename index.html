@@ -10,6 +10,7 @@
   --bg-color: #fafafa;
   --card-bg: #ffffff;
   --text-main: #262626;
+  --text-light: #8e8e8e;
   --border: #efefef;
   --accent: #c6a76b; /* Dorado */
   --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -275,12 +276,18 @@ body {
   font-weight: 600;
   font-size: 14px;
   color: #262626;
+  line-height: 1.2;
 }
 .uploader-label {
   font-weight: 400;
   font-size: 12px;
-  color: #8e8e8e;
+  color: var(--text-light);
   display: block;
+}
+.upload-time {
+  font-size: 11px;
+  color: #a0a0a0;
+  font-weight: 400;
 }
 
 /* MEDIA */
@@ -361,6 +368,19 @@ body {
   font-size: 14px;
   margin-bottom: 4px;
   line-height: 1.4;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.comment-text {
+    flex: 1;
+    margin-right: 8px;
+}
+.comment-time {
+    font-size: 11px;
+    color: #a0a0a0;
+    white-space: nowrap;
+    margin-top: 2px;
 }
 
 .view-more-comments {
@@ -608,7 +628,7 @@ input[type=file] { display: none; }
 
 <script>
 // --- CONFIGURACIÓN ---
-const API = "https://script.google.com/macros/s/AKfycbwYAF1MP2AsqFIYuYvEP0Q0zLxBU5VuY74GqvmY4nrsETwjMNxU37zLcO0pdvnWRQM/exec";
+const API = "https://script.google.com/macros/s/AKfycbwxbLL4URFB1FgFAxFFKNt-YqY38bkAqMnJCFExURB6rVCXPafKKMZHu-A7W3ofr4wE/exec";
 
 /* REFERENCIAS DOM */
 const gallery = document.getElementById("gallery");
@@ -626,6 +646,24 @@ let itemsGlobal = [];
 let slideInterval = null;
 let isSlideshowActive = false;
 let currentUser = "";
+
+/* --- UTILIDAD DE TIEMPO (HACE X MINUTOS) --- */
+function timeAgo(dateParam) {
+  if (!dateParam) return "";
+  const date = new Date(dateParam);
+  const now = new Date();
+  const seconds = Math.round((now - date) / 1000);
+  const minutes = Math.round(seconds / 60);
+  const hours = Math.round(minutes / 60);
+  const days = Math.round(hours / 24);
+
+  if (seconds < 60) return "ahora";
+  if (minutes < 60) return `${minutes} min`;
+  if (hours < 24) return `${hours} h`;
+  if (days < 7) return `${days} d`;
+  
+  return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+}
 
 /* --- SISTEMA DE USUARIO --- */
 function checkLogin() {
@@ -739,14 +777,15 @@ function createCardElement(item, myLikes, isModal = false) {
       // HEADER
       const uploaderName = item.uploader || "Invitado";
       const initial = uploaderName.charAt(0).toUpperCase();
-      
+      const timeAgoStr = timeAgo(item.timestamp); // Hora subida foto
+
       const headerDiv = document.createElement("div");
       headerDiv.className = "card-header";
       headerDiv.innerHTML = `
         <div class="user-avatar-placeholder">${initial}</div>
         <div>
            <div class="uploader-info">${uploaderName}</div>
-           <span class="uploader-label">Boda WhyNot!?</span>
+           <span class="upload-time">${timeAgoStr}</span>
         </div>
       `;
       card.appendChild(headerDiv);
@@ -830,7 +869,7 @@ function createCardElement(item, myLikes, isModal = false) {
       }
       card.appendChild(commentsSection);
 
-      // INPUT CON LÓGICA OPTIMISTA
+      // INPUT OPTIMISTA
       const addCommentBox = document.createElement("div");
       addCommentBox.className = "add-comment-box";
       
@@ -842,30 +881,25 @@ function createCardElement(item, myLikes, isModal = false) {
       postBtn.className = "post-btn";
       postBtn.textContent = "Publicar";
       
-      // NUEVA LÓGICA: ACTUALIZAR DOM INSTANTÁNEAMENTE
       postBtn.onclick = () => {
           const text = inputComment.value.trim();
           if(!text) return;
           
           const fullText = `${currentUser}: ${text}`;
+          const now = new Date(); // Hora local inmediata
           
           // 1. Mostrar ya (Optimista)
-          appendComment(commentsSection, {text: fullText});
+          appendComment(commentsSection, {text: fullText, time: now});
           
-          // 2. Actualizar array local para que no desaparezca si hay un autoreload
+          // 2. Actualizar array local
           const globalItem = itemsGlobal.find(i => i.id === item.id);
           if(globalItem) {
               if(!globalItem.comments) globalItem.comments = [];
-              globalItem.comments.push({text: fullText});
+              globalItem.comments.push({text: fullText, time: now});
           }
 
-          // 3. Limpiar
           inputComment.value = "";
-          
-          // 4. Enviar al servidor en segundo plano
           comment(item.id, currentUser, text);
-          
-          // 5. Scroll si es modal
           if(isModal) commentsSection.scrollTop = commentsSection.scrollHeight;
       };
 
@@ -878,16 +912,25 @@ function createCardElement(item, myLikes, isModal = false) {
 
 function appendComment(container, c) {
     if(!c.text) return;
+    const timeStr = timeAgo(c.time); // "Hace 5 min"
+
     const p = document.createElement("div");
     p.className = "comment";
+    
+    let contentHtml = "";
     if(c.text.includes(":")){
         const parts = c.text.split(":");
         const name = parts[0];
         const msg = parts.slice(1).join(":");
-        p.innerHTML = `<strong>${name}:</strong> ${msg}`;
+        contentHtml = `<span><strong>${name}:</strong> ${msg}</span>`;
     } else {
-        p.innerHTML = `<strong>Invitado:</strong> ${c.text}`;
+        contentHtml = `<span><strong>Invitado:</strong> ${c.text}</span>`;
     }
+
+    p.innerHTML = `
+        <div class="comment-text">${contentHtml}</div>
+        <div class="comment-time">${timeStr}</div>
+    `;
     container.appendChild(p);
 }
 
@@ -943,7 +986,6 @@ async function handleLike(event, id, countElementId) {
   const globalItem = itemsGlobal.find(i => i.id === id);
 
   if (btn.classList.contains("liked")) {
-      // UNLIKE
       btn.classList.remove("liked");
       let newVal = Math.max(0, current - 1);
       if(newVal === 0) {
@@ -951,33 +993,20 @@ async function handleLike(event, id, countElementId) {
       } else {
           if(countEl) countEl.textContent = `${newVal} Me gusta`;
       }
-      
-      // Actualizar local storage
       myLikes = myLikes.filter(itemId => itemId !== id);
       localStorage.setItem("whynot_likes", JSON.stringify(myLikes));
-      
-      // Actualizar array global (Optimista)
       if(globalItem) globalItem.likes = newVal;
-
-      // Backend
       await fetch(API, {method: "POST", body: new URLSearchParams({action: "unlike", id: id})});
   } else {
-      // LIKE
       btn.classList.add("liked");
       spawnFloatingHearts(btn);
       let newVal = current + 1;
       if(countEl) countEl.textContent = `${newVal} Me gusta`;
-      
-      // Actualizar local storage
       if (!myLikes.includes(id)) {
           myLikes.push(id);
           localStorage.setItem("whynot_likes", JSON.stringify(myLikes));
       }
-      
-      // Actualizar array global (Optimista)
       if(globalItem) globalItem.likes = newVal;
-
-      // Backend
       await fetch(API, {method: "POST", body: new URLSearchParams({action: "like", id: id})});
   }
 }
@@ -1002,12 +1031,10 @@ function spawnFloatingHearts(element) {
 async function comment(id, name, text){
   if(!text) return;
   const displayName = name.trim() || "Anónimo";
-  // Enviamos al servidor
   await fetch(API, {
     method: "POST",
     body: new URLSearchParams({action: "comment", id, text: `${displayName}: ${text}`})
   });
-  // No recargamos aquí para evitar parpadeos, confiamos en la actualización local
 }
 
 /* --- COMPARTIR --- */
@@ -1072,7 +1099,6 @@ function openFullPost(item) {
     modalContent.appendChild(card);
 }
 
-// LOGICA CORREGIDA PARA CERRAR
 function closeModalDirect(event) {
     if (event.target.id === "modal" || event.target.id === "modal-content") {
         stopSlideshow();
