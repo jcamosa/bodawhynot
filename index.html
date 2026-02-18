@@ -491,7 +491,7 @@ input[type=file] { display: none; }
 
 <script>
 // --- CONFIGURACIÓN ---
-const API = "https://script.google.com/macros/s/AKfycbwj5OcGGnUPll13s9MxwFEjIeofe_CniatpOQ5q5WVYVQlppa4IxwWqrkguvVXLQd4G/exec";
+const API = "https://script.google.com/macros/s/AKfycbwYAF1MP2AsqFIYuYvEP0Q0zLxBU5VuY74GqvmY4nrsETwjMNxU37zLcO0pdvnWRQM/exec";
 
 /* REFERENCIAS DOM */
 const gallery = document.getElementById("gallery");
@@ -614,12 +614,11 @@ function renderGallery(items) {
       const likeBtn = document.createElement("button");
       likeBtn.className = "icon-btn" + (alreadyLiked ? " liked" : "");
       likeBtn.innerHTML = heartSVG;
-      likeBtn.onclick = (e) => {
-          if (alreadyLiked) return; 
-          handleLike(e, item.id);
-      };
       
-      // SHARE - Optimizado con s1200 para velocidad
+      // LOGICA DE LIKE/UNLIKE
+      likeBtn.onclick = (e) => handleLike(e, item.id);
+      
+      // SHARE - CALIDAD ORIGINAL
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
       shareBtn.innerHTML = shareSVG;
@@ -749,30 +748,57 @@ function showToast(msg) {
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
+/* HANDLE LIKE/UNLIKE */
 async function handleLike(event, id) {
   const btn = event.currentTarget;
-  if(btn.classList.contains("liked")) return;
-  
-  btn.classList.add("liked");
-  spawnFloatingHearts(btn);
-  
   const countEl = document.getElementById(`likes-${id}`);
-  if(countEl) {
-    let text = countEl.textContent;
-    let current = parseInt(text);
-    if (isNaN(current)) current = 0;
-    countEl.textContent = `${current + 1} Me gusta`;
+  let current = 0;
+  if(countEl && countEl.textContent !== "Sé el primero en dar Like") {
+      current = parseInt(countEl.textContent);
   }
 
+  let myLikes = [];
   try {
-      let myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
+     myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
+  } catch(e){}
+
+  // SI YA TIENE LIKE -> UNLIKE
+  if (btn.classList.contains("liked")) {
+      btn.classList.remove("liked");
+      
+      // Restar visualmente
+      let newVal = Math.max(0, current - 1);
+      if(newVal === 0) {
+          if(countEl) countEl.textContent = "Sé el primero en dar Like";
+      } else {
+          if(countEl) countEl.textContent = `${newVal} Me gusta`;
+      }
+
+      // Quitar de local storage
+      myLikes = myLikes.filter(itemId => itemId !== id);
+      localStorage.setItem("whynot_likes", JSON.stringify(myLikes));
+
+      // Llamada al backend para restar
+      await fetch(API, {method: "POST", body: new URLSearchParams({action: "unlike", id: id})});
+  
+  } else {
+      // SI NO TIENE LIKE -> LIKE
+      btn.classList.add("liked");
+      spawnFloatingHearts(btn);
+      
+      // Sumar visualmente
+      let newVal = current + 1;
+      if(countEl) countEl.textContent = `${newVal} Me gusta`;
+
+      // Añadir a local storage
       if (!myLikes.includes(id)) {
           myLikes.push(id);
           localStorage.setItem("whynot_likes", JSON.stringify(myLikes));
       }
-  } catch(e){}
 
-  await fetch(API, {method: "POST", body: new URLSearchParams({action: "like", id: id})});
+      // Llamada al backend para sumar
+      await fetch(API, {method: "POST", body: new URLSearchParams({action: "like", id: id})});
+  }
 }
 
 function spawnFloatingHearts(element) {
@@ -802,9 +828,9 @@ async function comment(id, name, text){
   setTimeout(() => loadGallery(true), 1000);
 }
 
-/* --- LOGICA COMPARTIR OPTIMIZADA (S1200) --- */
+/* --- COMPARTIR CALIDAD ORIGINAL (=s0) --- */
 async function shareImage(url) {
-  showToast("Preparando foto... 📲");
+  showToast("Preparando foto (Calidad Original)... 📲");
   
   try {
     let id = "";
@@ -812,13 +838,12 @@ async function shareImage(url) {
       id = url.split("id=")[1].split("&")[0];
     }
     
-    // Cambiado s3000 a s1200 para que sea RÁPIDO y genere PREVIEW en iPhone
-    const fetchUrl = `https://lh3.googleusercontent.com/d/${id}=s1200`;
+    // =s0 indica tamaño original.
+    const fetchUrl = `https://lh3.googleusercontent.com/d/${id}=s0`;
 
     const response = await fetch(fetchUrl);
     if (!response.ok) throw new Error("Error red");
     const blob = await response.blob();
-    // Le ponemos nombre único para evitar caché de previsualización
     const file = new File([blob], `boda_whynot_${id}.jpg`, { type: "image/jpeg" });
 
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
