@@ -11,7 +11,7 @@
   --card-bg: #ffffff;
   --text-main: #262626;
   --border: #efefef;
-  --accent: #c6a76b;
+  --accent: #c6a76b; /* Dorado */
   --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -94,7 +94,7 @@ body {
 /* --- HEADER --- */
 .header {
   position: relative;
-  height: 40vh;
+  height: 35vh;
   overflow: hidden;
   background-color: #333;
   background-image: url("https://raw.githubusercontent.com/jcamosa/bodawhynot/main/header.jpg");
@@ -148,6 +148,79 @@ body {
   border: 1px solid rgba(255,255,255,0.3);
 }
 
+/* --- STORIES RANKING --- */
+.stories-wrapper {
+  background: #fff;
+  border-bottom: 1px solid #efefef;
+  padding: 15px 0 15px 15px;
+  display: flex;
+  overflow-x: auto;
+  gap: 15px;
+  scrollbar-width: none; /* Firefox */
+}
+.stories-wrapper::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+.story-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 70px;
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.story-ring {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+/* Dorado para el ranking */
+.story-ring.gold {
+  background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+}
+
+.story-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid white;
+  object-fit: cover;
+  background: #eee;
+}
+
+.story-rank {
+  position: absolute;
+  bottom: 15px;
+  right: 0;
+  background: #000;
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid #fff;
+}
+
+.story-name {
+  font-size: 11px;
+  margin-top: 4px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
 /* GALERÍA */
 .gallery {
   max-width: 600px;
@@ -155,7 +228,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding-top: 20px;
+  padding-top: 10px;
 }
 
 .card {
@@ -243,13 +316,14 @@ body {
   border: none;
   cursor: pointer;
   padding: 0;
-  transition: transform 0.1s;
+  transition: opacity 0.2s, transform 0.1s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .icon-btn:active { transform: scale(1.2); }
+.icon-btn:disabled { opacity: 0.5; cursor: wait; }
 
 .icon-btn svg {
   width: 26px;
@@ -283,7 +357,6 @@ body {
   line-height: 1.4;
 }
 
-/* VER MÁS COMENTARIOS */
 .view-more-comments {
   color: #8e8e8e;
   font-size: 14px;
@@ -455,6 +528,9 @@ input[type=file] { display: none; }
   </div>
 </div>
 
+<div id="stories" class="stories-wrapper">
+  </div>
+
 <div id="gallery" class="gallery">
   <p style="text-align:center; color:#999; margin-top:40px;">Cargando competición...</p>
 </div>
@@ -495,6 +571,7 @@ const API = "https://script.google.com/macros/s/AKfycbwYAF1MP2AsqFIYuYvEP0Q0zLxB
 
 /* REFERENCIAS DOM */
 const gallery = document.getElementById("gallery");
+const storiesContainer = document.getElementById("stories");
 const input = document.getElementById("file");
 const modal = document.getElementById("modal");
 const modalContent = document.getElementById("modal-content");
@@ -551,13 +628,55 @@ async function loadGallery(silent = false){
   try {
     const res = await fetch(API);
     let items = await res.json();
+    
+    // Ordenar por ID (tiempo) para el feed normal
     items.sort((a, b) => b.id - a.id); 
     itemsGlobal = items;
-    if(!silent) renderGallery(items);
+    
+    if(!silent) {
+        renderStories(items);
+        renderGallery(items);
+    }
   } catch (error) {
     if(!silent) gallery.innerHTML = "<p style='text-align:center;'>Error de conexión.</p>";
   }
 }
+
+/* --- RENDER STORIES (RANKING) --- */
+function renderStories(items) {
+    storiesContainer.innerHTML = "";
+    
+    // Filtramos solo fotos (no videos)
+    const photos = items.filter(i => !i.url.includes("/vid.mp4"));
+    
+    // Ordenamos por likes (descendente)
+    const ranking = [...photos].sort((a, b) => b.likes - a.likes);
+    
+    // Cogemos el Top 5
+    const top5 = ranking.slice(0, 5);
+
+    if(top5.length === 0) {
+        storiesContainer.style.display = "none";
+        return;
+    }
+    storiesContainer.style.display = "flex";
+
+    top5.forEach((item, index) => {
+        const el = document.createElement("div");
+        el.className = "story-item";
+        el.onclick = () => openModal(item.url); // Al hacer clic, abre la foto grande
+
+        el.innerHTML = `
+            <div class="story-ring gold">
+                <img class="story-img" src="${item.url}" loading="lazy">
+            </div>
+            <div class="story-rank">${index + 1}</div>
+            <div class="story-name">${item.likes} pts</div>
+        `;
+        storiesContainer.appendChild(el);
+    });
+}
+
 
 function renderGallery(items) {
     let myLikes = [];
@@ -614,15 +733,13 @@ function renderGallery(items) {
       const likeBtn = document.createElement("button");
       likeBtn.className = "icon-btn" + (alreadyLiked ? " liked" : "");
       likeBtn.innerHTML = heartSVG;
-      
-      // LOGICA DE LIKE/UNLIKE
       likeBtn.onclick = (e) => handleLike(e, item.id);
       
       // SHARE - CALIDAD ORIGINAL
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
       shareBtn.innerHTML = shareSVG;
-      shareBtn.onclick = () => shareImage(item.url);
+      shareBtn.onclick = (e) => shareImage(e, item.url);
 
       leftActions.appendChild(likeBtn);
       leftActions.appendChild(shareBtn);
@@ -762,41 +879,28 @@ async function handleLike(event, id) {
      myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
   } catch(e){}
 
-  // SI YA TIENE LIKE -> UNLIKE
   if (btn.classList.contains("liked")) {
+      // UNLIKE
       btn.classList.remove("liked");
-      
-      // Restar visualmente
       let newVal = Math.max(0, current - 1);
       if(newVal === 0) {
           if(countEl) countEl.textContent = "Sé el primero en dar Like";
       } else {
           if(countEl) countEl.textContent = `${newVal} Me gusta`;
       }
-
-      // Quitar de local storage
       myLikes = myLikes.filter(itemId => itemId !== id);
       localStorage.setItem("whynot_likes", JSON.stringify(myLikes));
-
-      // Llamada al backend para restar
       await fetch(API, {method: "POST", body: new URLSearchParams({action: "unlike", id: id})});
-  
   } else {
-      // SI NO TIENE LIKE -> LIKE
+      // LIKE
       btn.classList.add("liked");
       spawnFloatingHearts(btn);
-      
-      // Sumar visualmente
       let newVal = current + 1;
       if(countEl) countEl.textContent = `${newVal} Me gusta`;
-
-      // Añadir a local storage
       if (!myLikes.includes(id)) {
           myLikes.push(id);
           localStorage.setItem("whynot_likes", JSON.stringify(myLikes));
       }
-
-      // Llamada al backend para sumar
       await fetch(API, {method: "POST", body: new URLSearchParams({action: "like", id: id})});
   }
 }
@@ -828,17 +932,23 @@ async function comment(id, name, text){
   setTimeout(() => loadGallery(true), 1000);
 }
 
-/* --- COMPARTIR CALIDAD ORIGINAL (=s0) --- */
-async function shareImage(url) {
-  showToast("Preparando foto (Calidad Original)... 📲");
+/* --- COMPARTIR ARREGLADO (FEEDBACK INMEDIATO) --- */
+async function shareImage(event, url) {
+  // Evitar doble click visual: deshabilitar botón temporalmente
+  const btn = event.currentTarget;
+  if(btn.disabled) return;
   
+  // Feedback inmediato
+  btn.style.opacity = "0.5";
+  showToast("Preparando foto... 📲");
+  btn.disabled = true;
+
   try {
     let id = "";
     if (url.includes("id=")) {
       id = url.split("id=")[1].split("&")[0];
     }
     
-    // =s0 indica tamaño original.
     const fetchUrl = `https://lh3.googleusercontent.com/d/${id}=s0`;
 
     const response = await fetch(fetchUrl);
@@ -866,6 +976,12 @@ async function shareImage(url) {
     } else {
        window.open(url, "_blank");
     }
+  } finally {
+      // Reactivar botón tras unos segundos
+      setTimeout(() => {
+          btn.disabled = false;
+          btn.style.opacity = "1";
+      }, 2000);
   }
 }
 
