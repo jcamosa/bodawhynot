@@ -259,7 +259,6 @@ body {
   fill: none;
 }
 
-/* CLASE LIKED: CORAZÓN ROJO */
 .icon-btn.liked svg {
   fill: #ed4956;
   stroke: #ed4956;
@@ -282,6 +281,22 @@ body {
   font-size: 14px;
   margin-bottom: 4px;
   line-height: 1.4;
+}
+
+/* ESTILO "VER MÁS COMENTARIOS" */
+.view-more-comments {
+  color: #8e8e8e;
+  font-size: 14px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+}
+
+.hidden-comments {
+  display: none;
 }
 
 /* INPUTS */
@@ -567,7 +582,7 @@ function renderGallery(items) {
       `;
       card.appendChild(headerDiv);
 
-      // MEDIA (Solo Imagen)
+      // MEDIA (Solo Imagen) - URL STANDARD SIN TRUCOS
       const mediaContainer = document.createElement("div");
       mediaContainer.className = "card-media-container";
       mediaContainer.onclick = () => openModal(item.url);
@@ -594,7 +609,7 @@ function renderGallery(items) {
           handleLike(e, item.id);
       };
       
-      // SHARE (Ahora sí es nativo de archivo)
+      // SHARE (Volvemos a lo básico fiable)
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
       shareBtn.innerHTML = shareSVG;
@@ -616,22 +631,49 @@ function renderGallery(items) {
       }
       card.appendChild(likesCount);
 
-      // COMENTARIOS
+      // COMENTARIOS (CON LÓGICA DE OCULTAR)
       const commentsSection = document.createElement("div");
       commentsSection.className = "comments-section";
-      item.comments.forEach(c => {
-        const p = document.createElement("div");
-        p.className = "comment";
-        if(c.text.includes(":")){
-            const parts = c.text.split(":");
-            const name = parts[0];
-            const msg = parts.slice(1).join(":");
-            p.innerHTML = `<strong>${name}:</strong> ${msg}`;
-        } else {
-            p.innerHTML = `<strong>Invitado:</strong> ${c.text}`;
-        }
-        commentsSection.appendChild(p);
-      });
+      
+      const totalComments = item.comments.length;
+      const MAX_VISIBLE = 3;
+
+      if (totalComments > MAX_VISIBLE) {
+        // Botón ver más
+        const viewMoreBtn = document.createElement("button");
+        viewMoreBtn.className = "view-more-comments";
+        viewMoreBtn.textContent = `Ver los ${totalComments} comentarios...`;
+        
+        // Contenedor de ocultos
+        const hiddenDiv = document.createElement("div");
+        hiddenDiv.className = "hidden-comments";
+
+        viewMoreBtn.onclick = () => {
+             hiddenDiv.style.display = "block";
+             viewMoreBtn.style.display = "none";
+        };
+        commentsSection.appendChild(viewMoreBtn);
+
+        // Renderizar todos, pero meter los primeros en el hiddenDiv si son muchos? 
+        // No, el orden es: Primero los ocultos (viejos), luego los visibles (nuevos)
+        // O al revés. Lo normal es ver los últimos.
+        
+        // Estrategia: Mostrar solo los últimos 3 siempre visibles. Los anteriores ocultos.
+        const visibleComments = item.comments.slice(totalComments - MAX_VISIBLE, totalComments);
+        const hiddenComments = item.comments.slice(0, totalComments - MAX_VISIBLE);
+
+        // Renderizar ocultos
+        hiddenComments.forEach(c => appendComment(hiddenDiv, c));
+        commentsSection.appendChild(hiddenDiv);
+
+        // Renderizar visibles
+        visibleComments.forEach(c => appendComment(commentsSection, c));
+
+      } else {
+        // Si son pocos, mostrar todos
+        item.comments.forEach(c => appendComment(commentsSection, c));
+      }
+
       card.appendChild(commentsSection);
 
       // INPUT COMENTARIO
@@ -656,6 +698,21 @@ function renderGallery(items) {
 
       gallery.appendChild(card);
     });
+}
+
+// Función auxiliar para pintar comentario
+function appendComment(container, c) {
+    const p = document.createElement("div");
+    p.className = "comment";
+    if(c.text.includes(":")){
+        const parts = c.text.split(":");
+        const name = parts[0];
+        const msg = parts.slice(1).join(":");
+        p.innerHTML = `<strong>${name}:</strong> ${msg}`;
+    } else {
+        p.innerHTML = `<strong>Invitado:</strong> ${c.text}`;
+    }
+    container.appendChild(p);
 }
 
 loadGallery();
@@ -746,40 +803,20 @@ async function comment(id, name, text){
   setTimeout(() => loadGallery(true), 1000);
 }
 
-/* --- LOGICA DE COMPARTIR NATIVA CORREGIDA --- */
+/* --- SHARE BÁSICO Y FIABLE --- */
 async function shareFile(url) {
-  showToast("Preparando foto... 📲");
-  try {
-    // TRUCO: Transformamos la URL de thumbnail a URL directa de contenido
-    // Esto suele saltarse el bloqueo CORS de Drive en muchos casos
-    let id = "";
-    if (url.includes("id=")) {
-      id = url.split("id=")[1].split("&")[0];
-    }
-    
-    // URL mágica que permite acceso directo al archivo
-    const directUrl = `https://lh3.googleusercontent.com/d/${id}=s2000`; // s2000 = tamaño grande
-
-    // Intentamos descargar la imagen desde la URL mágica
-    const response = await fetch(directUrl);
-    const blob = await response.blob();
-    const file = new File([blob], "boda_whynot.jpg", { type: "image/jpeg" });
-
-    // Compartir ARCHIVO
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
+  // Simplemente usa el compartir nativo con URL
+  // Es la opción que NUNCA falla
+  if (navigator.share) {
+      navigator.share({
         title: "Boda WhyNot!?",
-        text: "¡Mira este recuerdo! 😍"
-      });
-    } else {
-      throw new Error("No soporta compartir archivos");
-    }
-  } catch (error) {
-    // Si falla (ej: PC o bloqueo estricto), abrimos la imagen para descarga manual
-    console.log(error);
-    showToast("Abriendo imagen...");
-    window.open(url, '_blank');
+        text: "¡Mira esta foto! 😍",
+        url: url
+      }).catch(console.error);
+  } else {
+      // Fallback: copiar al portapapeles
+      navigator.clipboard.writeText(url);
+      showToast("Enlace copiado al portapapeles 📋");
   }
 }
 
