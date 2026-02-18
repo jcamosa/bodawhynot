@@ -283,7 +283,7 @@ body {
   line-height: 1.4;
 }
 
-/* BOTÓN VER MÁS */
+/* VER MÁS COMENTARIOS */
 .view-more-comments {
   color: #8e8e8e;
   font-size: 14px;
@@ -491,7 +491,7 @@ input[type=file] { display: none; }
 
 <script>
 // --- CONFIGURACIÓN ---
-const API = "https://script.google.com/macros/s/AKfycbwj5OcGGnUPll13s9MxwFEjIeofe_CniatpOQ5q5WVYVQlppa4IxwWqrkguvVXLQd4G/exec;
+const API = "https://script.google.com/macros/s/AKfycbwj5OcGGnUPll13s9MxwFEjIeofe_CniatpOQ5q5WVYVQlppa4IxwWqrkguvVXLQd4G/exec";
 
 /* REFERENCIAS DOM */
 const gallery = document.getElementById("gallery");
@@ -511,12 +511,18 @@ let currentUser = "";
 
 /* --- SISTEMA DE USUARIO --- */
 function checkLogin() {
-  const storedName = localStorage.getItem("whynot_user");
-  if (storedName) {
-    currentUser = storedName;
-    userTag.textContent = currentUser;
-    loginOverlay.style.display = "none";
-  } else {
+  try {
+    const storedName = localStorage.getItem("whynot_user");
+    if (storedName) {
+      currentUser = storedName;
+      userTag.textContent = currentUser;
+      loginOverlay.style.display = "none";
+    } else {
+      loginOverlay.style.display = "flex";
+    }
+  } catch (e) {
+    // Si falla localStorage (modo incógnito estricto), pedimos login siempre
+    console.log("Error localStorage:", e);
     loginOverlay.style.display = "flex";
   }
 }
@@ -525,13 +531,19 @@ function saveUser() {
   const name = usernameInput.value.trim();
   if (name.length < 2) return alert("Por favor, pon un nombre válido.");
   
-  localStorage.setItem("whynot_user", name);
+  try {
+    localStorage.setItem("whynot_user", name);
+  } catch (e) {
+    console.log("No se pudo guardar en memoria, pero continuamos.");
+  }
+  
   currentUser = name;
   userTag.textContent = currentUser;
   loginOverlay.style.display = "none";
   showToast("¡Bienvenido " + name + "! 👋");
 }
 
+/* CARGAR AL INICIO */
 checkLogin();
 
 /* ICONOS */
@@ -552,16 +564,19 @@ async function loadGallery(silent = false){
 }
 
 function renderGallery(items) {
-    const myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
-    gallery.innerHTML = "";
+    let myLikes = [];
+    try {
+        myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
+    } catch(e) {}
 
+    gallery.innerHTML = "";
     if(items.length === 0){
       gallery.innerHTML = "<p style='text-align:center;padding:20px;'>Sé el primero en subir una foto 📸</p>";
       return;
     }
 
     items.forEach(item => {
-      // Filtrar videos
+      // Ignorar videos si quedaron en el backend
       if(item.url.includes("/vid.mp4")) return;
 
       const card = document.createElement("div");
@@ -582,7 +597,7 @@ function renderGallery(items) {
       `;
       card.appendChild(headerDiv);
 
-      // MEDIA
+      // MEDIA 
       const mediaContainer = document.createElement("div");
       mediaContainer.className = "card-media-container";
       mediaContainer.onclick = () => openModal(item.url);
@@ -609,7 +624,7 @@ function renderGallery(items) {
           handleLike(e, item.id);
       };
       
-      // SHARE - Usamos la función mejorada
+      // SHARE - Nueva lógica corregida
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
       shareBtn.innerHTML = shareSVG;
@@ -631,7 +646,7 @@ function renderGallery(items) {
       }
       card.appendChild(likesCount);
 
-      // COMENTARIOS (LOGICA VER MÁS)
+      // COMENTARIOS
       const commentsSection = document.createElement("div");
       commentsSection.className = "comments-section";
       
@@ -754,11 +769,13 @@ async function handleLike(event, id) {
     countEl.textContent = `${current + 1} Me gusta`;
   }
 
-  let myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
-  if (!myLikes.includes(id)) {
-      myLikes.push(id);
-      localStorage.setItem("whynot_likes", JSON.stringify(myLikes));
-  }
+  try {
+      let myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
+      if (!myLikes.includes(id)) {
+          myLikes.push(id);
+          localStorage.setItem("whynot_likes", JSON.stringify(myLikes));
+      }
+  } catch(e){}
 
   await fetch(API, {method: "POST", body: new URLSearchParams({action: "like", id: id})});
 }
@@ -790,27 +807,28 @@ async function comment(id, name, text){
   setTimeout(() => loadGallery(true), 1000);
 }
 
-/* --- LOGICA DE COMPARTIR DEFINITIVA --- */
+/* --- LOGICA DE COMPARTIR ROBUSTA CON URL SEGURA --- */
 async function shareImage(url) {
   showToast("Preparando foto... 📲");
   
   try {
-    // 1. Extraemos el ID de Drive de la URL
+    // 1. Obtener ID
     let id = "";
     if (url.includes("id=")) {
       id = url.split("id=")[1].split("&")[0];
     }
     
-    // 2. Usamos la URL de Google que permite descargas (lh3)
-    // Sin esta URL, la seguridad de Google bloquea el acceso al archivo
-    const fetchUrl = `https://lh3.googleusercontent.com/d/${id}`;
+    // 2. URL HTTPS Segura y Correcta
+    // Usamos el template literal correctamente con `${id}`
+    const fetchUrl = `https://lh3.googleusercontent.com/d/${id}=s3000`;
 
-    // 3. Descargamos la imagen como un "Blob" (Archivo temporal)
+    // 3. Obtener el archivo (Blob)
     const response = await fetch(fetchUrl);
+    if (!response.ok) throw new Error("Error red");
     const blob = await response.blob();
     const file = new File([blob], "boda_whynot.jpg", { type: "image/jpeg" });
 
-    // 4. Compartir EL ARCHIVO (No el link)
+    // 4. Compartir archivo
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
@@ -818,12 +836,12 @@ async function shareImage(url) {
         text: "¡Mira este recuerdo! 😍"
       });
     } else {
-      throw new Error("No soporta compartir archivos");
+      throw new Error("No soporta archivos");
     }
 
   } catch (error) {
-    console.error("Error al compartir archivo:", error);
-    // Si falla (PC o bloqueo), compartimos solo el texto
+    console.error("Error share:", error);
+    // Fallback elegante
     if (navigator.share) {
        navigator.share({
          title: "Boda WhyNot!?",
