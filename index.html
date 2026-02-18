@@ -175,7 +175,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 70px;
+  width: 74px; /* Un poco más ancho para el borde nuevo */
   flex-shrink: 0;
   cursor: pointer;
   position: relative;
@@ -185,7 +185,8 @@ body {
   width: 66px;
   height: 66px;
   border-radius: 50%;
-  padding: 3px; /* Un pelín más grueso para el metal */
+  /* AUMENTADO EL GROSOR DEL BORDE */
+  padding: 5px; 
   display: flex;
   justify-content: center;
   align-items: center;
@@ -194,7 +195,7 @@ body {
 /* PODIUM COLORS */
 .story-ring.gold {
   background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
-  box-shadow: 0 0 8px rgba(191, 149, 63, 0.4);
+  box-shadow: 0 0 10px rgba(191, 149, 63, 0.5);
 }
 .story-ring.silver {
   background: linear-gradient(45deg, #9c9c9c, #ffffff, #c0c0c0, #eaeaea, #7f7f7f);
@@ -203,43 +204,29 @@ body {
   background: linear-gradient(45deg, #804a00, #dcb183, #cd7f32, #b06b28);
 }
 .story-ring.black {
-  background: linear-gradient(45deg, #444, #000);
+  background: linear-gradient(45deg, #444, #222);
 }
 
 .story-img {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 2px solid white;
+  border: 3px solid white; /* Borde blanco interno un poco más grueso para contraste */
   object-fit: cover;
   background: #eee;
 }
 
-.story-rank {
-  position: absolute;
-  bottom: 15px;
-  right: 0;
-  background: #000;
-  color: #fff;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  font-size: 11px;
-  font-weight: bold;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 2px solid #fff;
-}
+/* SE HA ELIMINADO LA CLASE .story-rank (el número) */
 
 .story-name {
   font-size: 11px;
-  margin-top: 4px;
+  margin-top: 6px;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
+  font-weight: 600;
 }
 
 /* GALERÍA */
@@ -729,7 +716,6 @@ async function loadGallery(silent = false){
 function renderStories(items) {
     storiesContainer.innerHTML = "";
     const photos = items.filter(i => !i.url.includes("/vid.mp4"));
-    // Ordenar por Likes para el ranking
     const ranking = [...photos].sort((a, b) => b.likes - a.likes);
     const top5 = ranking.slice(0, 5);
 
@@ -746,17 +732,16 @@ function renderStories(items) {
         el.className = "story-item";
         el.onclick = () => openFullPost(item);
 
-        // DETERMINAR EL COLOR DEL ANILLO (METAL)
-        let ringClass = "black"; // Por defecto (4º y 5º)
+        let ringClass = "black";
         if (index === 0) ringClass = "gold";
         else if (index === 1) ringClass = "silver";
         else if (index === 2) ringClass = "bronze";
 
+        // SE HA ELIMINADO EL DIV DEL RANK (NÚMERO)
         el.innerHTML = `
             <div class="story-ring ${ringClass}">
                 <img class="story-img" src="${item.url}" loading="lazy">
             </div>
-            <div class="story-rank">${index + 1}</div>
             <div class="story-name">${item.likes} pts</div>
         `;
         storiesContainer.appendChild(el);
