@@ -804,29 +804,22 @@ function createCardElement(item, myLikes, isModal = false) {
       commentsSection.className = "comments-section";
       
       if (isModal) {
-          // En modal, mostramos TODOS
           item.comments.forEach(c => appendComment(commentsSection, c));
       } else {
-          // En feed, lógica de ocultar
           const total = item.comments.length;
           const LIMIT = 3;
           if (total > LIMIT) {
              const btnMore = document.createElement("button");
              btnMore.className = "view-more-comments";
              btnMore.textContent = `Ver los ${total} comentarios...`;
-             
              const hiddenDiv = document.createElement("div");
              hiddenDiv.className = "hidden-comments";
-             
              const hiddenComments = item.comments.slice(0, total - LIMIT);
              hiddenComments.forEach(c => appendComment(hiddenDiv, c));
-
              const visibleComments = item.comments.slice(total - LIMIT, total);
-             
              commentsSection.appendChild(btnMore);
              commentsSection.appendChild(hiddenDiv);
              visibleComments.forEach(c => appendComment(commentsSection, c));
-
              btnMore.onclick = () => {
                  hiddenDiv.style.display = "block";
                  btnMore.style.display = "none";
@@ -837,7 +830,7 @@ function createCardElement(item, myLikes, isModal = false) {
       }
       card.appendChild(commentsSection);
 
-      // INPUT
+      // INPUT CON LÓGICA OPTIMISTA
       const addCommentBox = document.createElement("div");
       addCommentBox.className = "add-comment-box";
       
@@ -848,12 +841,32 @@ function createCardElement(item, myLikes, isModal = false) {
       const postBtn = document.createElement("button");
       postBtn.className = "post-btn";
       postBtn.textContent = "Publicar";
+      
+      // NUEVA LÓGICA: ACTUALIZAR DOM INSTANTÁNEAMENTE
       postBtn.onclick = () => {
-          comment(item.id, currentUser, inputComment.value);
-          inputComment.value = "";
-          if(isModal) {
-             appendComment(commentsSection, {text: `${currentUser}: ${inputComment.value}`});
+          const text = inputComment.value.trim();
+          if(!text) return;
+          
+          const fullText = `${currentUser}: ${text}`;
+          
+          // 1. Mostrar ya (Optimista)
+          appendComment(commentsSection, {text: fullText});
+          
+          // 2. Actualizar array local para que no desaparezca si hay un autoreload
+          const globalItem = itemsGlobal.find(i => i.id === item.id);
+          if(globalItem) {
+              if(!globalItem.comments) globalItem.comments = [];
+              globalItem.comments.push({text: fullText});
           }
+
+          // 3. Limpiar
+          inputComment.value = "";
+          
+          // 4. Enviar al servidor en segundo plano
+          comment(item.id, currentUser, text);
+          
+          // 5. Scroll si es modal
+          if(isModal) commentsSection.scrollTop = commentsSection.scrollHeight;
       };
 
       addCommentBox.appendChild(inputComment);
@@ -914,7 +927,7 @@ function showToast(msg) {
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
-/* HANDLE LIKE/UNLIKE */
+/* HANDLE LIKE/UNLIKE (OPTIMISTA) */
 async function handleLike(event, id, countElementId) {
   const btn = event.currentTarget;
   const countEl = document.getElementById(countElementId); 
@@ -927,7 +940,10 @@ async function handleLike(event, id, countElementId) {
   let myLikes = [];
   try { myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]"); } catch(e){}
 
+  const globalItem = itemsGlobal.find(i => i.id === id);
+
   if (btn.classList.contains("liked")) {
+      // UNLIKE
       btn.classList.remove("liked");
       let newVal = Math.max(0, current - 1);
       if(newVal === 0) {
@@ -935,18 +951,33 @@ async function handleLike(event, id, countElementId) {
       } else {
           if(countEl) countEl.textContent = `${newVal} Me gusta`;
       }
+      
+      // Actualizar local storage
       myLikes = myLikes.filter(itemId => itemId !== id);
       localStorage.setItem("whynot_likes", JSON.stringify(myLikes));
+      
+      // Actualizar array global (Optimista)
+      if(globalItem) globalItem.likes = newVal;
+
+      // Backend
       await fetch(API, {method: "POST", body: new URLSearchParams({action: "unlike", id: id})});
   } else {
+      // LIKE
       btn.classList.add("liked");
       spawnFloatingHearts(btn);
       let newVal = current + 1;
       if(countEl) countEl.textContent = `${newVal} Me gusta`;
+      
+      // Actualizar local storage
       if (!myLikes.includes(id)) {
           myLikes.push(id);
           localStorage.setItem("whynot_likes", JSON.stringify(myLikes));
       }
+      
+      // Actualizar array global (Optimista)
+      if(globalItem) globalItem.likes = newVal;
+
+      // Backend
       await fetch(API, {method: "POST", body: new URLSearchParams({action: "like", id: id})});
   }
 }
@@ -971,11 +1002,12 @@ function spawnFloatingHearts(element) {
 async function comment(id, name, text){
   if(!text) return;
   const displayName = name.trim() || "Anónimo";
+  // Enviamos al servidor
   await fetch(API, {
     method: "POST",
     body: new URLSearchParams({action: "comment", id, text: `${displayName}: ${text}`})
   });
-  setTimeout(() => loadGallery(true), 1500);
+  // No recargamos aquí para evitar parpadeos, confiamos en la actualización local
 }
 
 /* --- COMPARTIR --- */
@@ -1042,8 +1074,6 @@ function openFullPost(item) {
 
 // LOGICA CORREGIDA PARA CERRAR
 function closeModalDirect(event) {
-    // Cerramos si el click es en el fondo negro (modal) o en el contenedor flex (modal-content)
-    // PERO NO si el click es en la tarjeta (.modal-card) o en sus hijos
     if (event.target.id === "modal" || event.target.id === "modal-content") {
         stopSlideshow();
     }
