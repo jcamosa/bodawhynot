@@ -92,6 +92,79 @@ body {
   cursor: pointer;
 }
 
+/* --- EDITOR DE FILTROS --- */
+.filter-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 3000;
+  display: none; /* Oculto por defecto */
+  flex-direction: column;
+}
+
+.filter-header {
+  height: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  color: white;
+}
+.filter-btn-cancel { color: #fff; background: none; border: none; font-size: 16px; cursor: pointer; }
+.filter-btn-next { color: #3897f0; background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; }
+
+.filter-preview-area {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #111;
+  overflow: hidden;
+}
+.filter-canvas {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.filter-list {
+  height: 120px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  gap: 15px;
+  padding: 0 15px;
+  scrollbar-width: none;
+}
+.filter-list::-webkit-scrollbar { display: none; }
+
+.filter-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  min-width: 80px;
+}
+.filter-thumb {
+  width: 60px;
+  height: 60px;
+  background: #333;
+  margin-bottom: 8px;
+  border: 2px solid transparent;
+}
+.filter-option.active .filter-thumb {
+  border-color: #fff;
+}
+.filter-name {
+  color: #8e8e8e;
+  font-size: 12px;
+}
+.filter-option.active .filter-name {
+  color: #fff;
+}
+
+
 /* --- HEADER --- */
 .header {
   position: relative;
@@ -211,12 +284,10 @@ body {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 3px solid white; /* Borde blanco interno un poco más grueso para contraste */
+  border: 3px solid white; 
   object-fit: cover;
   background: #eee;
 }
-
-/* SE HA ELIMINADO LA CLASE .story-rank (el número) */
 
 .story-name {
   font-size: 11px;
@@ -579,6 +650,19 @@ input[type=file] { display: none; }
   </div>
 </div>
 
+<div id="filterOverlay" class="filter-overlay">
+  <div class="filter-header">
+    <button class="filter-btn-cancel" onclick="closeFilterEditor()">Cancelar</button>
+    <span style="font-weight:600">Editar</span>
+    <button class="filter-btn-next" onclick="uploadFilteredPhoto()">Enviar</button>
+  </div>
+  <div class="filter-preview-area">
+    <canvas id="filterCanvas" class="filter-canvas"></canvas>
+  </div>
+  <div class="filter-list" id="filterList">
+    </div>
+</div>
+
 <div class="stories-title">🏆 Top 5 - Más Votados</div>
 <div id="stories" class="stories-wrapper">
   </div>
@@ -632,11 +716,31 @@ const loginOverlay = document.getElementById("loginOverlay");
 const usernameInput = document.getElementById("usernameInput");
 const userTag = document.getElementById("userTag");
 
+// Referencias del Editor
+const filterOverlay = document.getElementById("filterOverlay");
+const filterCanvas = document.getElementById("filterCanvas");
+const filterList = document.getElementById("filterList");
+let ctx = filterCanvas.getContext("2d");
+let currentImage = new Image();
+let currentFilter = "none";
+let rawFile = null;
+
 /* VARIABLES GLOBALES */
 let itemsGlobal = [];
 let slideInterval = null;
 let isSlideshowActive = false;
 let currentUser = "";
+
+/* --- FILTROS DISPONIBLES (CSS FILTERS) --- */
+const FILTERS = [
+  { name: "Normal", val: "none" },
+  { name: "B&W", val: "grayscale(100%)" },
+  { name: "Sepia", val: "sepia(100%)" },
+  { name: "Cálido", val: "sepia(50%) contrast(110%) brightness(110%)" },
+  { name: "Vintage", val: "sepia(40%) contrast(120%) brightness(90%) saturate(80%)" },
+  { name: "Fade", val: "brightness(110%) contrast(90%) saturate(80%)" },
+  { name: "Drama", val: "contrast(140%) saturate(0%)" }
+];
 
 /* --- UTILIDAD DE TIEMPO (HACE X MINUTOS) --- */
 function timeAgo(dateParam) {
@@ -737,7 +841,6 @@ function renderStories(items) {
         else if (index === 1) ringClass = "silver";
         else if (index === 2) ringClass = "bronze";
 
-        // SE HA ELIMINADO EL DIV DEL RANK (NÚMERO)
         el.innerHTML = `
             <div class="story-ring ${ringClass}">
                 <img class="story-img" src="${item.url}" loading="lazy">
@@ -931,38 +1034,103 @@ function appendComment(container, c) {
 loadGallery();
 setInterval(() => { if(!isSlideshowActive) loadGallery(true); }, 15000);
 
-/* UPLOAD */
+/* --- SISTEMA DE UPLOAD CON FILTROS --- */
+
+// 1. Interceptar selección de archivo
 input.onchange = async () => {
   const file = input.files[0];
   if(!file) return;
+  rawFile = file;
 
-  const label = document.querySelector(".btn-primary");
-  const originalText = label.innerHTML;
-  label.innerHTML = "Subiendo...";
-
+  // Leer imagen
   const reader = new FileReader();
-  reader.onload = async () => {
-    const base64 = reader.result.split(",")[1];
-    const data = new URLSearchParams();
-    data.append("action", "upload");
-    data.append("file", base64);
-    data.append("name", file.name);
-    data.append("type", file.type);
-    data.append("uploader", currentUser || "Anónimo");
-
-    await fetch(API, {method: "POST", body: data});
-    label.innerHTML = originalText;
-    showToast();
-    loadGallery(); 
+  reader.onload = (e) => {
+    currentImage.onload = () => {
+        openFilterEditor();
+    };
+    currentImage.src = e.target.result;
   };
   reader.readAsDataURL(file);
 };
 
-function showToast(msg) {
-    toast.textContent = msg || "¡Foto subida correctamente! 🎉";
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 3000);
+// 2. Abrir editor
+function openFilterEditor() {
+    filterOverlay.style.display = "flex";
+    currentFilter = "none";
+    
+    // Preparar lista de filtros
+    filterList.innerHTML = "";
+    FILTERS.forEach(f => {
+        const div = document.createElement("div");
+        div.className = "filter-option";
+        if(f.val === "none") div.classList.add("active");
+        
+        div.innerHTML = `
+           <div class="filter-thumb" style="filter:${f.val}; background-image:url(${currentImage.src}); background-size:cover; background-position:center;"></div>
+           <span class="filter-name">${f.name}</span>
+        `;
+        div.onclick = () => {
+            currentFilter = f.val;
+            // Actualizar UI
+            document.querySelectorAll(".filter-option").forEach(el => el.classList.remove("active"));
+            div.classList.add("active");
+            drawCanvas();
+        };
+        filterList.appendChild(div);
+    });
+
+    drawCanvas();
 }
+
+function closeFilterEditor() {
+    filterOverlay.style.display = "none";
+    input.value = ""; // Resetear input
+}
+
+// 3. Dibujar en el canvas
+function drawCanvas() {
+    // Ajustar tamaño canvas (max 1200px para no explotar memoria)
+    const MAX_SIZE = 1200;
+    let w = currentImage.width;
+    let h = currentImage.height;
+    
+    if (w > h) {
+        if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; }
+    } else {
+        if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; }
+    }
+
+    filterCanvas.width = w;
+    filterCanvas.height = h;
+
+    // Aplicar filtro
+    ctx.filter = currentFilter;
+    ctx.drawImage(currentImage, 0, 0, w, h);
+}
+
+// 4. Subir imagen filtrada
+function uploadFilteredPhoto() {
+    const dataURL = filterCanvas.toDataURL("image/jpeg", 0.85); // Calidad 85%
+    const base64 = dataURL.split(",")[1];
+    
+    closeFilterEditor();
+    showToast("Subiendo foto... 🚀");
+
+    const data = new URLSearchParams();
+    data.append("action", "upload");
+    data.append("file", base64);
+    data.append("name", "filtro_" + rawFile.name); // Nombre modificado
+    data.append("type", "image/jpeg");
+    data.append("uploader", currentUser || "Anónimo");
+
+    fetch(API, {method: "POST", body: data})
+      .then(() => {
+          showToast("¡Foto subida correctamente! 🎉");
+          loadGallery();
+      })
+      .catch(() => showToast("Error al subir"));
+}
+
 
 /* HANDLE LIKE/UNLIKE (OPTIMISTA) */
 async function handleLike(event, id, countElementId) {
@@ -1056,7 +1224,7 @@ async function shareImage(event, url) {
       await navigator.share({
         files: [file],
         title: "Boda WhyNot!?",
-        text: "¡Mira este recuerdo de la boda de Jose&Irene! 😍"
+        text: "¡Mira este recuerdo! 😍"
       });
     } else {
       throw new Error("No soporta archivos");
