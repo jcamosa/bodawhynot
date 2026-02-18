@@ -244,7 +244,7 @@ body {
   cursor: pointer;
   padding: 0;
   transition: transform 0.1s;
-  display: flex; /* Asegura que el SVG se vea */
+  display: flex;
   align-items: center;
   justify-content: center;
 }
@@ -519,7 +519,7 @@ checkLogin();
 
 /* ICONOS */
 const heartSVG = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
-// Icono clásico de compartir (Nodes)
+// Icono compartir estándar
 const shareSVG = `<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>`;
 
 /* CARGA DE DATOS */
@@ -536,7 +536,7 @@ async function loadGallery(silent = false){
 }
 
 function renderGallery(items) {
-    // 1. RECUPERAR LIKES
+    // RECUPERAR LIKES
     const myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
 
     gallery.innerHTML = "";
@@ -546,7 +546,7 @@ function renderGallery(items) {
     }
 
     items.forEach(item => {
-      // Ignorar videos si quedaron en el backend (solo mostrar fotos)
+      // Ignorar videos si quedaron en el backend
       if(item.url.includes("/vid.mp4")) return;
 
       const card = document.createElement("div");
@@ -567,7 +567,7 @@ function renderGallery(items) {
       `;
       card.appendChild(headerDiv);
 
-      // MEDIA (Solo Imagen) - ARREGLADO: Sin crossOrigin para visualización
+      // MEDIA (Solo Imagen) - SIN atributos raros para que cargue siempre
       const mediaContainer = document.createElement("div");
       mediaContainer.className = "card-media-container";
       mediaContainer.onclick = () => openModal(item.url);
@@ -576,7 +576,6 @@ function renderGallery(items) {
       img.src = item.url; 
       img.loading = "lazy";
       mediaContainer.appendChild(img);
-      
       card.appendChild(mediaContainer);
 
       // ACCIONES
@@ -595,7 +594,7 @@ function renderGallery(items) {
           handleLike(e, item.id);
       };
       
-      // SHARE (LOGICA COMPLEJA AQUI)
+      // SHARE (Botón)
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
       shareBtn.innerHTML = shareSVG;
@@ -747,17 +746,16 @@ async function comment(id, name, text){
   setTimeout(() => loadGallery(true), 1000);
 }
 
-/* --- LOGICA DE COMPARTIR NATIVA (Intenta descargar imagen) --- */
+/* --- LOGICA DE COMPARTIR ROBUSTA --- */
 async function shareFile(url) {
   showToast("Preparando foto... 📲");
-  
   try {
-    // Intentamos descargar la imagen como BLOB
+    // Intenta descargar la imagen
     const response = await fetch(url);
     const blob = await response.blob();
     const file = new File([blob], "recuerdo_boda.jpg", { type: "image/jpeg" });
 
-    // Si el navegador soporta compartir ARCHIVOS (Android/iPhone)
+    // Intenta compartir el ARCHIVO
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
@@ -765,17 +763,17 @@ async function shareFile(url) {
         text: "¡Mira este recuerdo! 😍"
       });
     } else {
-      // Si estamos en PC o no soporta compartir archivo directo
       throw new Error("No soporta compartir archivos");
     }
   } catch (error) {
-    console.log("Error compartiendo archivo nativo", error);
-    // FALLBACK: Si no puede compartir la imagen, comparte el enlace
+    // FALLBACK: Si falla (por seguridad de Google o PC), abre la imagen nueva
+    // para que el usuario pueda guardarla o copiarla.
     if (navigator.share) {
-      navigator.share({ title: "Boda WhyNot!?", text: "¡Mira esta foto! 😍", url: url });
+         // Intenta compartir solo el texto/link
+         navigator.share({ title: "Boda WhyNot!?", text: "¡Mira esta foto! 😍", url: url });
     } else {
-      // Si tampoco tiene share (PC Chrome antiguo), abre la imagen
-      window.open(url, '_blank');
+         window.open(url, '_blank');
+         showToast("Mantén pulsada la foto para compartir 👆");
     }
   }
 }
@@ -809,12 +807,10 @@ function changeRandomSlide(){
     const randomIndex = Math.floor(Math.random() * itemsGlobal.length);
     const item = itemsGlobal[randomIndex];
     
-    // Ignorar videos en slideshow
     if(item.url.includes("/vid.mp4")) {
         changeRandomSlide();
         return;
     }
-
     modalContent.innerHTML = "";
     const img = document.createElement("img");
     img.src = item.url; 
