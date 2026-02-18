@@ -296,7 +296,7 @@ input[type=file] { display: none; }
 
 <script>
 // --- CONFIGURACIÓN ---
-const API = "https://script.google.com/macros/s/AKfycbzmS338lKO2rn6s_affGEdLR2RUfpOzvrVQqKgTOO4h2f8pMWMgve_N220Fk7ItHP9r/exec";
+const API = "https://script.google.com/macros/s/AKfycbwNcTmXOA7IZHDcDB3v3R_c01KRdI4IyhAj52dOJ-KIxtphyaWSfBlNYnSnraRShsJ_/exec";
 
 /* REFERENCIAS DOM */
 const gallery = document.getElementById("gallery");
@@ -445,12 +445,7 @@ function createCardElement(item, myLikes, isModal = false) {
 
       const mediaContainer = document.createElement("div");
       mediaContainer.className = "card-media-container";
-      
-      // --- CAMBIO CLAVE: ABRIR FULL POST TAMBIÉN DESDE EL MURO ---
-      if(!isModal) {
-         mediaContainer.onclick = () => openFullPost(item);
-      }
-      
+      if(!isModal) mediaContainer.onclick = () => openFullPost(item);
       const img = document.createElement("img");
       img.src = item.url; 
       img.loading = "lazy";
@@ -587,64 +582,105 @@ function openFilterEditor() {
             currentFilter = f.val;
             document.querySelectorAll(".filter-option").forEach(el => el.classList.remove("active"));
             div.classList.add("active");
-            drawCanvas();
+            drawCanvas(false); // Dibuja preview (pequeña)
         };
         filterList.appendChild(div);
     });
-    drawCanvas();
+    drawCanvas(false);
 }
 
 function closeFilterEditor() { filterOverlay.style.display = "none"; input.value = ""; }
 
-// DIBUJADO OPTIMIZADO PARA MÓVIL (MAX 800px)
-function drawCanvas() {
-    const MAX_SIZE = 800; 
+// FUNCION MAESTRA PARA DIBUJAR
+function drawCanvas(isHighRes = false) {
+    // Si es HighRes (para la copia original), usamos 2048px.
+    // Si es normal (para la web), usamos 600px (iPhone friendly).
+    const MAX_SIZE = isHighRes ? 2048 : 600; 
     let w = currentImage.width;
     let h = currentImage.height;
+    
     if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; } } 
     else { if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; } }
 
     filterCanvas.width = w;
     filterCanvas.height = h;
     
-    // Aseguramos contexto fresco y aplicamos filtro
     ctx = filterCanvas.getContext("2d");
-    ctx.filter = currentFilter;
+    ctx.clearRect(0,0,w,h);
+    
+    // Si es HighRes (copia original), NO APLICAMOS FILTRO
+    if(isHighRes) {
+        ctx.filter = "none";
+    } else {
+        ctx.filter = currentFilter;
+    }
+    
     ctx.drawImage(currentImage, 0, 0, w, h);
 }
 
 function uploadFilteredPhoto() {
-    // --- PASO CLAVE: REDIBUJAR JUSTO ANTES DE EXPORTAR ---
-    drawCanvas(); 
+    // 1. DIBUJAR Y SUBIR VERSIÓN FILTRADA (PEQUEÑA)
+    drawCanvas(false); 
     
-    const dataURL = filterCanvas.toDataURL("image/jpeg", 0.7); 
-    const base64 = dataURL.split(",")[1];
+    // Esperamos 100ms para asegurar renderizado en iOS
+    setTimeout(() => {
+        const dataURL = filterCanvas.toDataURL("image/jpeg", 0.7); 
+        const base64 = dataURL.split(",")[1];
+        
+        closeFilterEditor();
+        showToast("Subiendo foto... 🚀");
+
+        const payload = {
+            action: "upload",
+            file: base64,
+            name: "filtro_" + rawFile.name,
+            type: "image/jpeg",
+            uploader: currentUser || "Anónimo"
+        };
+
+        fetch(API, {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: { "Content-Type": "text/plain" }
+        })
+        .then(res => res.text())
+        .then(txt => {
+              showToast("¡Foto subida correctamente! 🎉");
+              loadGallery();
+              
+              // 2. INICIAR SUBIDA DE LA ORIGINAL (ALTA RESOLUCIÓN)
+              uploadOriginalPhoto();
+        })
+        .catch((e) => {
+              console.error(e);
+              showToast("Error al subir. Intenta de nuevo.");
+        });
+    }, 100);
+}
+
+function uploadOriginalPhoto() {
+    // Dibujamos en ALTA CALIDAD y SIN FILTRO
+    drawCanvas(true);
     
-    closeFilterEditor();
-    showToast("Subiendo foto... 🚀");
+    setTimeout(() => {
+        const dataURL = filterCanvas.toDataURL("image/jpeg", 0.85); // Un poco más de calidad
+        const base64 = dataURL.split(",")[1];
+        
+        const payload = {
+            action: "upload",
+            file: base64,
+            name: "ORIGINAL_" + rawFile.name, // PREFIJO IMPORTANTE
+            type: "image/jpeg",
+            uploader: currentUser || "Anónimo"
+        };
 
-    const payload = {
-        action: "upload",
-        file: base64,
-        name: "filtro_" + rawFile.name,
-        type: "image/jpeg",
-        uploader: currentUser || "Anónimo"
-    };
-
-    fetch(API, {
-        method: "POST",
-        body: JSON.stringify(payload),
-        headers: { "Content-Type": "text/plain" }
-    })
-    .then(res => res.text())
-    .then(txt => {
-          showToast("¡Foto subida correctamente! 🎉");
-          loadGallery();
-    })
-    .catch((e) => {
-          console.error(e);
-          showToast("Error al subir. Intenta de nuevo.");
-    });
+        // Enviamos silenciosamente (sin toast de éxito ni recarga)
+        fetch(API, {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: { "Content-Type": "text/plain" }
+        }).then(() => console.log("Original subida OK"));
+    }, 200);
 }
 
 /* HANDLE LIKE/UNLIKE */
