@@ -98,7 +98,7 @@ body {
   inset: 0;
   background: #000;
   z-index: 3000;
-  display: none; /* Oculto por defecto */
+  display: none; 
   flex-direction: column;
 }
 
@@ -109,6 +109,7 @@ body {
   align-items: center;
   padding: 0 20px;
   color: white;
+  background: #000;
 }
 .filter-btn-cancel { color: #fff; background: none; border: none; font-size: 16px; cursor: pointer; }
 .filter-btn-next { color: #3897f0; background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; }
@@ -120,7 +121,9 @@ body {
   align-items: center;
   background: #111;
   overflow: hidden;
+  position: relative;
 }
+/* Importante: max-width para que no se salga en movil */
 .filter-canvas {
   max-width: 100%;
   max-height: 100%;
@@ -128,16 +131,16 @@ body {
 }
 
 .filter-list {
-  height: 120px;
+  height: 140px;
   background: #000;
   display: flex;
   align-items: center;
   overflow-x: auto;
-  gap: 15px;
-  padding: 0 15px;
-  scrollbar-width: none;
+  gap: 10px;
+  padding: 0 10px;
+  /* Scroll suave en iOS */
+  -webkit-overflow-scrolling: touch; 
 }
-.filter-list::-webkit-scrollbar { display: none; }
 
 .filter-option {
   display: flex;
@@ -145,13 +148,16 @@ body {
   align-items: center;
   cursor: pointer;
   min-width: 80px;
+  flex-shrink: 0;
 }
 .filter-thumb {
-  width: 60px;
-  height: 60px;
-  background: #333;
+  width: 70px;
+  height: 70px;
+  background-size: cover;
+  background-position: center;
   margin-bottom: 8px;
   border: 2px solid transparent;
+  border-radius: 4px;
 }
 .filter-option.active .filter-thumb {
   border-color: #fff;
@@ -248,7 +254,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 74px; /* Un poco más ancho para el borde nuevo */
+  width: 74px;
   flex-shrink: 0;
   cursor: pointer;
   position: relative;
@@ -258,14 +264,12 @@ body {
   width: 66px;
   height: 66px;
   border-radius: 50%;
-  /* AUMENTADO EL GROSOR DEL BORDE */
   padding: 5px; 
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* PODIUM COLORS */
 .story-ring.gold {
   background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
   box-shadow: 0 0 10px rgba(191, 149, 63, 0.5);
@@ -607,7 +611,7 @@ input[type=file] { display: none; }
   border-radius: 30px;
   font-size: 14px;
   font-weight: 500;
-  z-index: 200;
+  z-index: 3100; /* Encima de filtros */
   opacity: 0;
   transition: opacity 0.3s, top 0.3s;
   pointer-events: none;
@@ -742,7 +746,7 @@ const FILTERS = [
   { name: "Drama", val: "contrast(140%) saturate(0%)" }
 ];
 
-/* --- UTILIDAD DE TIEMPO (HACE X MINUTOS) --- */
+/* --- UTILIDAD DE TIEMPO --- */
 function timeAgo(dateParam) {
   if (!dateParam) return "";
   const date = new Date(dateParam);
@@ -802,11 +806,8 @@ async function loadGallery(silent = false){
   try {
     const res = await fetch(API);
     let items = await res.json();
-    
-    // Ordenar por ID para el feed (más reciente primero)
     items.sort((a, b) => b.id - a.id); 
     itemsGlobal = items;
-    
     if(!silent) {
         renderStories(items);
         renderGallery(items);
@@ -868,12 +869,10 @@ function renderGallery(items) {
     });
 }
 
-// FUNCIÓN GENERADORA DE TARJETAS
 function createCardElement(item, myLikes, isModal = false) {
       const card = document.createElement("div");
       card.className = isModal ? "modal-card" : "card";
 
-      // HEADER
       const uploaderName = item.uploader || "Invitado";
       const initial = uploaderName.charAt(0).toUpperCase();
       const timeAgoStr = timeAgo(item.timestamp); 
@@ -889,20 +888,17 @@ function createCardElement(item, myLikes, isModal = false) {
       `;
       card.appendChild(headerDiv);
 
-      // MEDIA 
       const mediaContainer = document.createElement("div");
       mediaContainer.className = "card-media-container";
       if(!isModal) {
          mediaContainer.onclick = () => openSimpleModal(item.url);
       }
-
       const img = document.createElement("img");
       img.src = item.url; 
       img.loading = "lazy";
       mediaContainer.appendChild(img);
       card.appendChild(mediaContainer);
 
-      // ACCIONES
       const actions = document.createElement("div");
       actions.className = "actions";
       const leftActions = document.createElement("div");
@@ -913,7 +909,6 @@ function createCardElement(item, myLikes, isModal = false) {
       likeBtn.className = "icon-btn" + (alreadyLiked ? " liked" : "");
       likeBtn.innerHTML = heartSVG;
       const likeCountId = isModal ? `likes-modal-${item.id}` : `likes-${item.id}`;
-      
       likeBtn.onclick = (e) => handleLike(e, item.id, likeCountId);
       
       const shareBtn = document.createElement("button");
@@ -926,7 +921,6 @@ function createCardElement(item, myLikes, isModal = false) {
       actions.appendChild(leftActions);
       card.appendChild(actions);
 
-      // LIKES
       const likesCount = document.createElement("div");
       likesCount.className = "likes-count";
       likesCount.id = likeCountId; 
@@ -937,7 +931,6 @@ function createCardElement(item, myLikes, isModal = false) {
       }
       card.appendChild(likesCount);
 
-      // COMENTARIOS
       const commentsSection = document.createElement("div");
       commentsSection.className = "comments-section";
       
@@ -968,14 +961,11 @@ function createCardElement(item, myLikes, isModal = false) {
       }
       card.appendChild(commentsSection);
 
-      // INPUT OPTIMISTA
       const addCommentBox = document.createElement("div");
       addCommentBox.className = "add-comment-box";
-      
       const inputComment = document.createElement("input");
       inputComment.className = "comment-input";
       inputComment.placeholder = `Comenta como ${currentUser}...`;
-      
       const postBtn = document.createElement("button");
       postBtn.className = "post-btn";
       postBtn.textContent = "Publicar";
@@ -983,18 +973,14 @@ function createCardElement(item, myLikes, isModal = false) {
       postBtn.onclick = () => {
           const text = inputComment.value.trim();
           if(!text) return;
-          
           const fullText = `${currentUser}: ${text}`;
           const now = new Date(); 
-          
           appendComment(commentsSection, {text: fullText, time: now});
-          
           const globalItem = itemsGlobal.find(i => i.id === item.id);
           if(globalItem) {
               if(!globalItem.comments) globalItem.comments = [];
               globalItem.comments.push({text: fullText, time: now});
           }
-
           inputComment.value = "";
           comment(item.id, currentUser, text);
           if(isModal) commentsSection.scrollTop = commentsSection.scrollHeight;
@@ -1003,17 +989,14 @@ function createCardElement(item, myLikes, isModal = false) {
       addCommentBox.appendChild(inputComment);
       addCommentBox.appendChild(postBtn);
       card.appendChild(addCommentBox);
-      
       return card;
 }
 
 function appendComment(container, c) {
     if(!c.text) return;
     const timeStr = timeAgo(c.time); 
-
     const p = document.createElement("div");
     p.className = "comment";
-    
     let contentHtml = "";
     if(c.text.includes(":")){
         const parts = c.text.split(":");
@@ -1023,28 +1006,23 @@ function appendComment(container, c) {
     } else {
         contentHtml = `<span><strong>Invitado:</strong> ${c.text}</span>`;
     }
-
-    p.innerHTML = `
-        <div class="comment-text">${contentHtml}</div>
-        <div class="comment-time">${timeStr}</div>
-    `;
+    p.innerHTML = `<div class="comment-text">${contentHtml}</div><div class="comment-time">${timeStr}</div>`;
     container.appendChild(p);
 }
 
 loadGallery();
 setInterval(() => { if(!isSlideshowActive) loadGallery(true); }, 15000);
 
-/* --- SISTEMA DE UPLOAD CON FILTROS --- */
+/* --- SISTEMA DE UPLOAD CON FILTROS (OPTIMIZADO) --- */
 
-// 1. Interceptar selección de archivo
 input.onchange = async () => {
   const file = input.files[0];
   if(!file) return;
   rawFile = file;
 
-  // Leer imagen
   const reader = new FileReader();
   reader.onload = (e) => {
+    // Al cargar la imagen, abrimos el editor
     currentImage.onload = () => {
         openFilterEditor();
     };
@@ -1053,44 +1031,43 @@ input.onchange = async () => {
   reader.readAsDataURL(file);
 };
 
-// 2. Abrir editor
 function openFilterEditor() {
     filterOverlay.style.display = "flex";
     currentFilter = "none";
     
-    // Preparar lista de filtros
+    // Generar miniaturas de filtros
     filterList.innerHTML = "";
     FILTERS.forEach(f => {
         const div = document.createElement("div");
         div.className = "filter-option";
         if(f.val === "none") div.classList.add("active");
         
+        // Usamos DIV con background-image para asegurar rendimiento en lista
         div.innerHTML = `
-           <div class="filter-thumb" style="filter:${f.val}; background-image:url(${currentImage.src}); background-size:cover; background-position:center;"></div>
+           <div class="filter-thumb" style="filter:${f.val}; background-image:url(${currentImage.src});"></div>
            <span class="filter-name">${f.name}</span>
         `;
         div.onclick = () => {
             currentFilter = f.val;
-            // Actualizar UI
             document.querySelectorAll(".filter-option").forEach(el => el.classList.remove("active"));
             div.classList.add("active");
-            drawCanvas();
+            drawCanvas(); // Redibujar canvas principal
         };
         filterList.appendChild(div);
     });
 
-    drawCanvas();
+    drawCanvas(); // Dibujado inicial
 }
 
 function closeFilterEditor() {
     filterOverlay.style.display = "none";
-    input.value = ""; // Resetear input
+    input.value = ""; 
 }
 
-// 3. Dibujar en el canvas
+// DIBUJADO OPTIMIZADO PARA MÓVIL
 function drawCanvas() {
-    // Ajustar tamaño canvas (max 1200px para no explotar memoria)
-    const MAX_SIZE = 1200;
+    // Limitar tamaño para que no explote el móvil (Max 1000px)
+    const MAX_SIZE = 1000; 
     let w = currentImage.width;
     let h = currentImage.height;
     
@@ -1103,14 +1080,14 @@ function drawCanvas() {
     filterCanvas.width = w;
     filterCanvas.height = h;
 
-    // Aplicar filtro
+    // Aplicar filtro y dibujar
     ctx.filter = currentFilter;
     ctx.drawImage(currentImage, 0, 0, w, h);
 }
 
-// 4. Subir imagen filtrada
 function uploadFilteredPhoto() {
-    const dataURL = filterCanvas.toDataURL("image/jpeg", 0.85); // Calidad 85%
+    // Usamos calidad 0.7 para reducir peso y asegurar subida
+    const dataURL = filterCanvas.toDataURL("image/jpeg", 0.7); 
     const base64 = dataURL.split(",")[1];
     
     closeFilterEditor();
@@ -1119,7 +1096,7 @@ function uploadFilteredPhoto() {
     const data = new URLSearchParams();
     data.append("action", "upload");
     data.append("file", base64);
-    data.append("name", "filtro_" + rawFile.name); // Nombre modificado
+    data.append("name", "filtro_" + rawFile.name); 
     data.append("type", "image/jpeg");
     data.append("uploader", currentUser || "Anónimo");
 
@@ -1128,11 +1105,14 @@ function uploadFilteredPhoto() {
           showToast("¡Foto subida correctamente! 🎉");
           loadGallery();
       })
-      .catch(() => showToast("Error al subir"));
+      .catch((e) => {
+          console.error(e);
+          showToast("Error al subir. Intenta de nuevo.");
+      });
 }
 
 
-/* HANDLE LIKE/UNLIKE (OPTIMISTA) */
+/* HANDLE LIKE/UNLIKE */
 async function handleLike(event, id, countElementId) {
   const btn = event.currentTarget;
   const countEl = document.getElementById(countElementId); 
@@ -1203,7 +1183,6 @@ async function comment(id, name, text){
 async function shareImage(event, url) {
   const btn = event.currentTarget;
   if(btn.disabled) return;
-  
   btn.style.opacity = "0.5";
   showToast("Preparando foto... 📲");
   btn.disabled = true;
@@ -1229,7 +1208,6 @@ async function shareImage(event, url) {
     } else {
       throw new Error("No soporta archivos");
     }
-
   } catch (error) {
     if (navigator.share) {
        navigator.share({ title: "Boda WhyNot!?", text: "¡Mira esta foto! 😍 " + url });
