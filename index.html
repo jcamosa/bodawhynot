@@ -11,7 +11,7 @@
   --card-bg: #ffffff;
   --text-main: #262626;
   --border: #efefef;
-  --accent: #c6a76b; /* Color dorado boda */
+  --accent: #c6a76b;
   --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -94,7 +94,7 @@ body {
 /* --- HEADER --- */
 .header {
   position: relative;
-  height: 40vh; /* Un poco menos alto para ver contenido antes */
+  height: 40vh;
   overflow: hidden;
   background-color: #333;
   background-image: url("https://raw.githubusercontent.com/jcamosa/bodawhynot/main/header.jpg");
@@ -173,7 +173,7 @@ body {
   }
 }
 
-/* CABECERA DE LA TARJETA (NUEVO: QUIEN LO SUBIÓ) */
+/* HEADER TARJETA */
 .card-header {
   padding: 10px 15px;
   display: flex;
@@ -204,7 +204,7 @@ body {
   display: block;
 }
 
-/* MEDIA CONTAINER */
+/* MEDIA */
 .card-media-container {
   width: 100%;
   background: #f4f4f4;
@@ -221,11 +221,11 @@ body {
   width: 100%;
   height: auto;
   max-height: 600px;
-  object-fit: contain; /* Ajustado para que se vea la foto entera si quieres */
+  object-fit: contain;
   display: block;
 }
 
-/* ESTILO ESPECIAL PARA TARJETA DE VIDEO EN FEED */
+/* VIDEO PLACEHOLDER */
 .video-placeholder {
   width: 100%;
   height: 350px;
@@ -245,7 +245,6 @@ body {
   font-size: 14px;
 }
 
-/* BOTÓN PLAY */
 .play-icon {
   width: 60px;
   height: 60px;
@@ -295,6 +294,7 @@ body {
   fill: none;
 }
 
+/* CLASE LIKED: CORAZÓN ROJO */
 .icon-btn.liked svg {
   fill: #ed4956;
   stroke: #ed4956;
@@ -417,7 +417,7 @@ input[type=file] { display: none; }
   object-fit: contain;
 }
 
-/* IFRAME DE VIDEO RESPONSIVE */
+/* VIDEO WRAPPER */
 .video-wrapper {
   position: relative;
   width: 100%;
@@ -524,8 +524,11 @@ input[type=file] { display: none; }
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbwj5OcGGnUPll13s9MxwFEjIeofe_CniatpOQ5q5WVYVQlppa4IxwWqrkguvVXLQd4G/exec";
+// --- CONFIGURACIÓN ---
+// IMPORTANTE: Si al desplegar de nuevo el Script cambió la URL, ponla aquí abajo.
+const API = "https://script.google.com/macros/s/AKfycbykQbkXTysZnDNFrs5yG3YIgt1iS8JiyXvpGaE1E6dYLRQvTIzE1dEf_DRrvy-yEchv/exec";
 
+/* REFERENCIAS DOM */
 const gallery = document.getElementById("gallery");
 const input = document.getElementById("file");
 const modal = document.getElementById("modal");
@@ -535,6 +538,7 @@ const loginOverlay = document.getElementById("loginOverlay");
 const usernameInput = document.getElementById("usernameInput");
 const userTag = document.getElementById("userTag");
 
+/* VARIABLES GLOBALES */
 let itemsGlobal = [];
 let slideInterval = null;
 let isSlideshowActive = false;
@@ -548,7 +552,6 @@ function checkLogin() {
     userTag.textContent = currentUser;
     loginOverlay.style.display = "none";
   } else {
-    // Si no hay nombre, mostramos el modal
     loginOverlay.style.display = "flex";
   }
 }
@@ -567,25 +570,24 @@ function saveUser() {
 // Ejecutar al inicio
 checkLogin();
 
-
 /* ICONOS */
 const heartSVG = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 const shareSVG = `<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>`;
 const playSVG = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
 
+/* UTILIDADES */
 function isVideo(url) {
   if(!url) return false;
-  return url.match(/\.(mp4|mov|webm|ogg)$/i) !== null;
+  return url.match(/\.(mp4|mov|webm|ogg)$/i) !== null || url.includes("/vid.mp4");
 }
 
 function getOptimizedImageUrl(url) {
-  if (isVideo(url)) return url; 
-  // Mantenemos tu lógica actual si te va bien, aunque la del $ es mejor
-  return url; 
+  return url; // Devolvemos la URL tal cual, el script ya envía el thumbnail
 }
 
 function getVideoPreviewUrl(url) {
-  return url.replace("/view", "/preview").replace("view?", "preview?");
+  let cleanUrl = url.replace("&/vid.mp4", "");
+  return cleanUrl.replace("/view", "/preview").replace("view?", "preview?");
 }
 
 /* CARGA DE DATOS */
@@ -593,7 +595,7 @@ async function loadGallery(silent = false){
   try {
     const res = await fetch(API);
     let items = await res.json();
-    items.sort((a, b) => b.id - a.id); 
+    items.sort((a, b) => b.id - a.id); // Orden simple por ID
     itemsGlobal = items;
     if(!silent) renderGallery(items);
   } catch (error) {
@@ -602,6 +604,9 @@ async function loadGallery(silent = false){
 }
 
 function renderGallery(items) {
+    // 1. RECUPERAR LIKES DEL USUARIO DESDE LA MEMORIA DEL MOVIL
+    const myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
+
     gallery.innerHTML = "";
     if(items.length === 0){
       gallery.innerHTML = "<p style='text-align:center;padding:20px;'>Sé el primero en subir una foto 📸</p>";
@@ -612,9 +617,8 @@ function renderGallery(items) {
       const card = document.createElement("div");
       card.className = "card";
 
-      // 1. HEADER DE LA CARTA (QUIEN SUBIÓ)
-      // Nota: Si el Google Script no devuelve 'uploader', saldrá 'Anónimo'
-      const uploaderName = item.uploader || "Invitado"; // Asegurate que tu Google Script devuelve esta columna
+      // HEADER CARTA
+      const uploaderName = item.uploader || "Invitado";
       const initial = uploaderName.charAt(0).toUpperCase();
       
       const headerDiv = document.createElement("div");
@@ -628,7 +632,7 @@ function renderGallery(items) {
       `;
       card.appendChild(headerDiv);
 
-      // 2. MEDIA
+      // MEDIA
       const mediaContainer = document.createElement("div");
       mediaContainer.className = "card-media-container";
       mediaContainer.onclick = () => openModal(item.url, isVideo(item.url));
@@ -642,22 +646,28 @@ function renderGallery(items) {
         `;
       } else {
         const img = document.createElement("img");
-        img.src = getOptimizedImageUrl(item.url); 
+        img.src = item.url; 
         img.loading = "lazy";
         mediaContainer.appendChild(img);
       }
       card.appendChild(mediaContainer);
 
-      // 3. ACCIONES
+      // ACCIONES
       const actions = document.createElement("div");
       actions.className = "actions";
       const leftActions = document.createElement("div");
       leftActions.className = "action-buttons";
       
+      // LOGICA DE LIKES (Aplicar clase 'liked' si ya votó)
+      const alreadyLiked = myLikes.includes(item.id);
+
       const likeBtn = document.createElement("button");
-      likeBtn.className = "icon-btn";
+      likeBtn.className = "icon-btn" + (alreadyLiked ? " liked" : "");
       likeBtn.innerHTML = heartSVG;
-      likeBtn.onclick = (e) => handleLike(e, item.id);
+      likeBtn.onclick = (e) => {
+          if (alreadyLiked) return; // Si ya votó, no hace nada
+          handleLike(e, item.id);
+      };
       
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
@@ -669,14 +679,18 @@ function renderGallery(items) {
       actions.appendChild(leftActions);
       card.appendChild(actions);
 
-      // 4. LIKES
+      // CONTADOR LIKES
       const likesCount = document.createElement("div");
       likesCount.className = "likes-count";
       likesCount.id = `likes-${item.id}`;
-      likesCount.textContent = item.likes > 0 ? `${item.likes} Me gusta` : "Sé el primero en dar Like";
+      if (item.likes > 0) {
+          likesCount.textContent = `${item.likes} Me gusta`;
+      } else {
+          likesCount.textContent = "Sé el primero en dar Like";
+      }
       card.appendChild(likesCount);
 
-      // 5. COMENTARIOS
+      // COMENTARIOS
       const commentsSection = document.createElement("div");
       commentsSection.className = "comments-section";
       item.comments.forEach(c => {
@@ -694,7 +708,7 @@ function renderGallery(items) {
       });
       card.appendChild(commentsSection);
 
-      // 6. INPUT COMENTARIO (SIN NOMBRE, SOLO TEXTO)
+      // INPUT COMENTARIO
       const addCommentBox = document.createElement("div");
       addCommentBox.className = "add-comment-box";
       
@@ -707,7 +721,7 @@ function renderGallery(items) {
       postBtn.textContent = "Publicar";
       postBtn.onclick = () => {
           comment(item.id, currentUser, inputComment.value);
-          inputComment.value = ""; // Limpiar
+          inputComment.value = "";
       };
 
       addCommentBox.appendChild(inputComment);
@@ -721,7 +735,7 @@ function renderGallery(items) {
 loadGallery();
 setInterval(() => { loadGallery(true); }, 15000);
 
-/* SUBIDA DE ARCHIVO (MODIFICADO PARA ENVIAR NOMBRE) */
+/* UPLOAD */
 input.onchange = async () => {
   const file = input.files[0];
   if(!file) return;
@@ -738,8 +752,6 @@ input.onchange = async () => {
     data.append("file", base64);
     data.append("name", file.name);
     data.append("type", file.type);
-    
-    // AQUI ENVIAMOS EL NOMBRE DEL USUARIO LOGUEADO
     data.append("uploader", currentUser || "Anónimo");
 
     await fetch(API, {method: "POST", body: data});
@@ -756,20 +768,34 @@ function showToast(msg) {
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
+/* HANDLE LIKE (CON PERSISTENCIA) */
 async function handleLike(event, id) {
   const btn = event.currentTarget;
-  if(btn.classList.contains("liked")) return; // Evitar spam de clicks local visual
   
+  if(btn.classList.contains("liked")) return;
+  
+  // Bloquear visualmente
   btn.classList.add("liked");
   spawnFloatingHearts(btn);
   
+  // Actualizar contador visualmente
   const countEl = document.getElementById(`likes-${id}`);
   if(countEl) {
     let text = countEl.textContent;
-    let current = parseInt(text) || 0;
+    let current = parseInt(text);
+    if (isNaN(current)) current = 0;
     countEl.textContent = `${current + 1} Me gusta`;
   }
-  await fetch(API, {method: "POST", body: new URLSearchParams({action: "like", id})});
+
+  // GUARDAR EN MEMORIA DEL MÓVIL
+  let myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
+  if (!myLikes.includes(id)) {
+      myLikes.push(id);
+      localStorage.setItem("whynot_likes", JSON.stringify(myLikes));
+  }
+
+  // ENVIAR AL BACKEND
+  await fetch(API, {method: "POST", body: new URLSearchParams({action: "like", id: id})});
 }
 
 function spawnFloatingHearts(element) {
@@ -792,12 +818,10 @@ function spawnFloatingHearts(element) {
 async function comment(id, name, text){
   if(!text) return;
   const displayName = name.trim() || "Anónimo";
-  // Usamos tu formato Nombre: Mensaje
   await fetch(API, {
     method: "POST",
     body: new URLSearchParams({action: "comment", id, text: `${displayName}: ${text}`})
   });
-  // Recarga suave tras comentar
   setTimeout(() => loadGallery(true), 1000);
 }
 
@@ -866,9 +890,6 @@ function changeRandomSlide(){
     const item = itemsGlobal[randomIndex];
     const isVid = isVideo(item.url);
     
-    // Muestra quien lo subió en el slideshow también (opcional)
-    // Se podría añadir un overlay con el nombre si quisieras
-    
     if(isVid) {
        const previewUrl = getVideoPreviewUrl(item.url);
        modalContent.innerHTML = `
@@ -878,7 +899,7 @@ function changeRandomSlide(){
     } else {
        modalContent.innerHTML = "";
        const img = document.createElement("img");
-       img.src = getOptimizedImageUrl(item.url); 
+       img.src = item.url; 
        modalContent.appendChild(img);
     }
   }
