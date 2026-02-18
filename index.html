@@ -701,7 +701,6 @@ function renderStories(items) {
     top5.forEach((item, index) => {
         const el = document.createElement("div");
         el.className = "story-item";
-        // AL PULSAR, ABRE LA TARJETA COMPLETA
         el.onclick = () => openFullPost(item);
 
         el.innerHTML = `
@@ -727,13 +726,12 @@ function renderGallery(items) {
 
     items.forEach(item => {
       if(item.url.includes("/vid.mp4")) return;
-
       const card = createCardElement(item, myLikes);
       gallery.appendChild(card);
     });
 }
 
-// FUNCIÓN GENERADORA DE TARJETAS (REUTILIZABLE)
+// FUNCIÓN GENERADORA DE TARJETAS
 function createCardElement(item, myLikes, isModal = false) {
       const card = document.createElement("div");
       card.className = isModal ? "modal-card" : "card";
@@ -756,8 +754,6 @@ function createCardElement(item, myLikes, isModal = false) {
       // MEDIA 
       const mediaContainer = document.createElement("div");
       mediaContainer.className = "card-media-container";
-      
-      // Si ya es modal, no hace nada al clickar la imagen
       if(!isModal) {
          mediaContainer.onclick = () => openSimpleModal(item.url);
       }
@@ -774,17 +770,14 @@ function createCardElement(item, myLikes, isModal = false) {
       const leftActions = document.createElement("div");
       leftActions.className = "action-buttons";
       
-      // LIKE
       const alreadyLiked = myLikes.includes(item.id);
       const likeBtn = document.createElement("button");
       likeBtn.className = "icon-btn" + (alreadyLiked ? " liked" : "");
       likeBtn.innerHTML = heartSVG;
-      // IMPORTANTE: ID único si es modal para que no choque con el feed
       const likeCountId = isModal ? `likes-modal-${item.id}` : `likes-${item.id}`;
       
       likeBtn.onclick = (e) => handleLike(e, item.id, likeCountId);
       
-      // SHARE
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
       shareBtn.innerHTML = shareSVG;
@@ -795,10 +788,10 @@ function createCardElement(item, myLikes, isModal = false) {
       actions.appendChild(leftActions);
       card.appendChild(actions);
 
-      // CONTADOR LIKES
+      // LIKES
       const likesCount = document.createElement("div");
       likesCount.className = "likes-count";
-      likesCount.id = likeCountId; // ID dinámico
+      likesCount.id = likeCountId; 
       if (item.likes > 0) {
           likesCount.textContent = `${item.likes} Me gusta`;
       } else {
@@ -858,7 +851,6 @@ function createCardElement(item, myLikes, isModal = false) {
       postBtn.onclick = () => {
           comment(item.id, currentUser, inputComment.value);
           inputComment.value = "";
-          // Si estamos en modal, añadimos el comentario visualmente ya
           if(isModal) {
              appendComment(commentsSection, {text: `${currentUser}: ${inputComment.value}`});
           }
@@ -925,7 +917,6 @@ function showToast(msg) {
 /* HANDLE LIKE/UNLIKE */
 async function handleLike(event, id, countElementId) {
   const btn = event.currentTarget;
-  // Buscamos el contador específico (sea modal o feed)
   const countEl = document.getElementById(countElementId); 
   
   let current = 0;
@@ -937,7 +928,6 @@ async function handleLike(event, id, countElementId) {
   try { myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]"); } catch(e){}
 
   if (btn.classList.contains("liked")) {
-      // UNLIKE
       btn.classList.remove("liked");
       let newVal = Math.max(0, current - 1);
       if(newVal === 0) {
@@ -949,7 +939,6 @@ async function handleLike(event, id, countElementId) {
       localStorage.setItem("whynot_likes", JSON.stringify(myLikes));
       await fetch(API, {method: "POST", body: new URLSearchParams({action: "unlike", id: id})});
   } else {
-      // LIKE
       btn.classList.add("liked");
       spawnFloatingHearts(btn);
       let newVal = current + 1;
@@ -986,11 +975,10 @@ async function comment(id, name, text){
     method: "POST",
     body: new URLSearchParams({action: "comment", id, text: `${displayName}: ${text}`})
   });
-  // Recargar un poco después
   setTimeout(() => loadGallery(true), 1500);
 }
 
-/* --- COMPARTIR ARREGLADO (FEEDBACK) --- */
+/* --- COMPARTIR --- */
 async function shareImage(event, url) {
   const btn = event.currentTarget;
   if(btn.disabled) return;
@@ -1022,7 +1010,6 @@ async function shareImage(event, url) {
     }
 
   } catch (error) {
-    console.error("Error share:", error);
     if (navigator.share) {
        navigator.share({ title: "Boda WhyNot!?", text: "¡Mira esta foto! 😍 " + url });
     } else {
@@ -1034,8 +1021,6 @@ async function shareImage(event, url) {
 }
 
 /* --- MODALES --- */
-
-// Modal Simple (Solo imagen, para el feed)
 function openSimpleModal(url){
   isSlideshowActive = false;
   modal.style.display = "flex";
@@ -1045,23 +1030,21 @@ function openSimpleModal(url){
   modalContent.appendChild(img);
 }
 
-// Modal Completo (Tarjeta, para el ranking)
 function openFullPost(item) {
     isSlideshowActive = false;
     modal.style.display = "flex";
     modalContent.innerHTML = "";
-    
     let myLikes = [];
     try { myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]"); } catch(e) {}
-    
-    // Crear tarjeta completa
     const card = createCardElement(item, myLikes, true);
     modalContent.appendChild(card);
 }
 
-// Cerrar al clickar fuera
+// LOGICA CORREGIDA PARA CERRAR
 function closeModalDirect(event) {
-    if (event.target === modal) {
+    // Cerramos si el click es en el fondo negro (modal) o en el contenedor flex (modal-content)
+    // PERO NO si el click es en la tarjeta (.modal-card) o en sus hijos
+    if (event.target.id === "modal" || event.target.id === "modal-content") {
         stopSlideshow();
     }
 }
@@ -1085,7 +1068,6 @@ function changeRandomSlide(){
   if(itemsGlobal.length > 0){
     const randomIndex = Math.floor(Math.random() * itemsGlobal.length);
     const item = itemsGlobal[randomIndex];
-    
     if(item.url.includes("/vid.mp4")) {
         changeRandomSlide();
         return;
