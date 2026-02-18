@@ -244,6 +244,9 @@ body {
   cursor: pointer;
   padding: 0;
   transition: transform 0.1s;
+  display: flex; /* Asegura que el SVG se vea */
+  align-items: center;
+  justify-content: center;
 }
 
 .icon-btn:active { transform: scale(1.2); }
@@ -516,8 +519,8 @@ checkLogin();
 
 /* ICONOS */
 const heartSVG = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
-// Icono de descarga/compartir actualizado
-const shareSVG = `<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
+// Icono clásico de compartir (Nodes)
+const shareSVG = `<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>`;
 
 /* CARGA DE DATOS */
 async function loadGallery(silent = false){
@@ -564,7 +567,7 @@ function renderGallery(items) {
       `;
       card.appendChild(headerDiv);
 
-      // MEDIA (Solo Imagen)
+      // MEDIA (Solo Imagen) - ARREGLADO: Sin crossOrigin para visualización
       const mediaContainer = document.createElement("div");
       mediaContainer.className = "card-media-container";
       mediaContainer.onclick = () => openModal(item.url);
@@ -572,7 +575,6 @@ function renderGallery(items) {
       const img = document.createElement("img");
       img.src = item.url; 
       img.loading = "lazy";
-      img.crossOrigin = "anonymous"; // Ayuda con la descarga
       mediaContainer.appendChild(img);
       
       card.appendChild(mediaContainer);
@@ -593,7 +595,7 @@ function renderGallery(items) {
           handleLike(e, item.id);
       };
       
-      // SHARE / DOWNLOAD
+      // SHARE (LOGICA COMPLEJA AQUI)
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
       shareBtn.innerHTML = shareSVG;
@@ -745,17 +747,17 @@ async function comment(id, name, text){
   setTimeout(() => loadGallery(true), 1000);
 }
 
-/* --- LOGICA DE COMPARTIR MEJORADA --- */
+/* --- LOGICA DE COMPARTIR NATIVA (Intenta descargar imagen) --- */
 async function shareFile(url) {
-  showToast("Cargando imagen... 📲");
+  showToast("Preparando foto... 📲");
   
   try {
-    // 1. Intentamos obtener la imagen como archivo blob
+    // Intentamos descargar la imagen como BLOB
     const response = await fetch(url);
     const blob = await response.blob();
     const file = new File([blob], "recuerdo_boda.jpg", { type: "image/jpeg" });
 
-    // 2. Si el navegador permite compartir ARCHIVOS (Móviles Android/iPhone)
+    // Si el navegador soporta compartir ARCHIVOS (Android/iPhone)
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
@@ -763,20 +765,18 @@ async function shareFile(url) {
         text: "¡Mira este recuerdo! 😍"
       });
     } else {
-      // 3. Fallback: Forzar descarga directa si no deja compartir
+      // Si estamos en PC o no soporta compartir archivo directo
       throw new Error("No soporta compartir archivos");
     }
   } catch (error) {
-    // Si algo falla (ej: PC o navegador antiguo), abrimos la imagen para descargar
-    console.log("Fallback descarga manual");
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "recuerdo_boda.jpg";
-    a.target = "_blank"; // Abrir en nueva pestaña si download falla
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showToast("Imagen descargada/abierta ⬇️");
+    console.log("Error compartiendo archivo nativo", error);
+    // FALLBACK: Si no puede compartir la imagen, comparte el enlace
+    if (navigator.share) {
+      navigator.share({ title: "Boda WhyNot!?", text: "¡Mira esta foto! 😍", url: url });
+    } else {
+      // Si tampoco tiene share (PC Chrome antiguo), abre la imagen
+      window.open(url, '_blank');
+    }
   }
 }
 
