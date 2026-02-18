@@ -283,16 +283,19 @@ body {
   line-height: 1.4;
 }
 
-/* ESTILO "VER MÁS COMENTARIOS" */
+/* BOTÓN VER MÁS */
 .view-more-comments {
   color: #8e8e8e;
   font-size: 14px;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
   cursor: pointer;
   background: none;
   border: none;
   padding: 0;
   text-align: left;
+  font-weight: 500;
+  display: block;
+  width: 100%;
 }
 
 .hidden-comments {
@@ -488,7 +491,7 @@ input[type=file] { display: none; }
 
 <script>
 // --- CONFIGURACIÓN ---
-const API = "https://script.google.com/macros/s/AKfycbwj5OcGGnUPll13s9MxwFEjIeofe_CniatpOQ5q5WVYVQlppa4IxwWqrkguvVXLQd4G/exec";
+const API = "https://script.google.com/macros/s/AKfycbwj5OcGGnUPll13s9MxwFEjIeofe_CniatpOQ5q5WVYVQlppa4IxwWqrkguvVXLQd4G/exec;
 
 /* REFERENCIAS DOM */
 const gallery = document.getElementById("gallery");
@@ -529,12 +532,10 @@ function saveUser() {
   showToast("¡Bienvenido " + name + "! 👋");
 }
 
-// Ejecutar al inicio
 checkLogin();
 
 /* ICONOS */
 const heartSVG = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
-// Icono compartir nativo (estilo iOS/Android)
 const shareSVG = `<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>`;
 
 /* CARGA DE DATOS */
@@ -551,17 +552,16 @@ async function loadGallery(silent = false){
 }
 
 function renderGallery(items) {
-    // RECUPERAR LIKES
     const myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]");
-
     gallery.innerHTML = "";
+
     if(items.length === 0){
       gallery.innerHTML = "<p style='text-align:center;padding:20px;'>Sé el primero en subir una foto 📸</p>";
       return;
     }
 
     items.forEach(item => {
-      // Ignorar videos si quedaron en el backend
+      // Filtrar videos
       if(item.url.includes("/vid.mp4")) return;
 
       const card = document.createElement("div");
@@ -582,7 +582,7 @@ function renderGallery(items) {
       `;
       card.appendChild(headerDiv);
 
-      // MEDIA (Solo Imagen) - URL STANDARD SIN TRUCOS
+      // MEDIA
       const mediaContainer = document.createElement("div");
       mediaContainer.className = "card-media-container";
       mediaContainer.onclick = () => openModal(item.url);
@@ -609,11 +609,11 @@ function renderGallery(items) {
           handleLike(e, item.id);
       };
       
-      // SHARE (Volvemos a lo básico fiable)
+      // SHARE - Usamos la función mejorada
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
       shareBtn.innerHTML = shareSVG;
-      shareBtn.onclick = () => shareFile(item.url);
+      shareBtn.onclick = () => shareImage(item.url);
 
       leftActions.appendChild(likeBtn);
       leftActions.appendChild(shareBtn);
@@ -631,52 +631,41 @@ function renderGallery(items) {
       }
       card.appendChild(likesCount);
 
-      // COMENTARIOS (CON LÓGICA DE OCULTAR)
+      // COMENTARIOS (LOGICA VER MÁS)
       const commentsSection = document.createElement("div");
       commentsSection.className = "comments-section";
       
-      const totalComments = item.comments.length;
-      const MAX_VISIBLE = 3;
+      const total = item.comments.length;
+      const LIMIT = 3;
 
-      if (totalComments > MAX_VISIBLE) {
-        // Botón ver más
-        const viewMoreBtn = document.createElement("button");
-        viewMoreBtn.className = "view-more-comments";
-        viewMoreBtn.textContent = `Ver los ${totalComments} comentarios...`;
-        
-        // Contenedor de ocultos
-        const hiddenDiv = document.createElement("div");
-        hiddenDiv.className = "hidden-comments";
+      if (total > LIMIT) {
+         const btnMore = document.createElement("button");
+         btnMore.className = "view-more-comments";
+         btnMore.textContent = `Ver los ${total} comentarios...`;
+         
+         const hiddenDiv = document.createElement("div");
+         hiddenDiv.className = "hidden-comments";
+         
+         const hiddenComments = item.comments.slice(0, total - LIMIT);
+         hiddenComments.forEach(c => appendComment(hiddenDiv, c));
 
-        viewMoreBtn.onclick = () => {
+         const visibleComments = item.comments.slice(total - LIMIT, total);
+         
+         commentsSection.appendChild(btnMore);
+         commentsSection.appendChild(hiddenDiv);
+         visibleComments.forEach(c => appendComment(commentsSection, c));
+
+         btnMore.onclick = () => {
              hiddenDiv.style.display = "block";
-             viewMoreBtn.style.display = "none";
-        };
-        commentsSection.appendChild(viewMoreBtn);
-
-        // Renderizar todos, pero meter los primeros en el hiddenDiv si son muchos? 
-        // No, el orden es: Primero los ocultos (viejos), luego los visibles (nuevos)
-        // O al revés. Lo normal es ver los últimos.
-        
-        // Estrategia: Mostrar solo los últimos 3 siempre visibles. Los anteriores ocultos.
-        const visibleComments = item.comments.slice(totalComments - MAX_VISIBLE, totalComments);
-        const hiddenComments = item.comments.slice(0, totalComments - MAX_VISIBLE);
-
-        // Renderizar ocultos
-        hiddenComments.forEach(c => appendComment(hiddenDiv, c));
-        commentsSection.appendChild(hiddenDiv);
-
-        // Renderizar visibles
-        visibleComments.forEach(c => appendComment(commentsSection, c));
-
+             btnMore.style.display = "none";
+         };
       } else {
-        // Si son pocos, mostrar todos
-        item.comments.forEach(c => appendComment(commentsSection, c));
+         item.comments.forEach(c => appendComment(commentsSection, c));
       }
 
       card.appendChild(commentsSection);
 
-      // INPUT COMENTARIO
+      // INPUT
       const addCommentBox = document.createElement("div");
       addCommentBox.className = "add-comment-box";
       
@@ -700,7 +689,6 @@ function renderGallery(items) {
     });
 }
 
-// Función auxiliar para pintar comentario
 function appendComment(container, c) {
     const p = document.createElement("div");
     p.className = "comment";
@@ -751,7 +739,6 @@ function showToast(msg) {
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
-/* HANDLE LIKE */
 async function handleLike(event, id) {
   const btn = event.currentTarget;
   if(btn.classList.contains("liked")) return;
@@ -803,20 +790,48 @@ async function comment(id, name, text){
   setTimeout(() => loadGallery(true), 1000);
 }
 
-/* --- SHARE BÁSICO Y FIABLE --- */
-async function shareFile(url) {
-  // Simplemente usa el compartir nativo con URL
-  // Es la opción que NUNCA falla
-  if (navigator.share) {
-      navigator.share({
+/* --- LOGICA DE COMPARTIR DEFINITIVA --- */
+async function shareImage(url) {
+  showToast("Preparando foto... 📲");
+  
+  try {
+    // 1. Extraemos el ID de Drive de la URL
+    let id = "";
+    if (url.includes("id=")) {
+      id = url.split("id=")[1].split("&")[0];
+    }
+    
+    // 2. Usamos la URL de Google que permite descargas (lh3)
+    // Sin esta URL, la seguridad de Google bloquea el acceso al archivo
+    const fetchUrl = `https://lh3.googleusercontent.com/d/${id}`;
+
+    // 3. Descargamos la imagen como un "Blob" (Archivo temporal)
+    const response = await fetch(fetchUrl);
+    const blob = await response.blob();
+    const file = new File([blob], "boda_whynot.jpg", { type: "image/jpeg" });
+
+    // 4. Compartir EL ARCHIVO (No el link)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
         title: "Boda WhyNot!?",
-        text: "¡Mira esta foto! 😍",
-        url: url
-      }).catch(console.error);
-  } else {
-      // Fallback: copiar al portapapeles
-      navigator.clipboard.writeText(url);
-      showToast("Enlace copiado al portapapeles 📋");
+        text: "¡Mira este recuerdo! 😍"
+      });
+    } else {
+      throw new Error("No soporta compartir archivos");
+    }
+
+  } catch (error) {
+    console.error("Error al compartir archivo:", error);
+    // Si falla (PC o bloqueo), compartimos solo el texto
+    if (navigator.share) {
+       navigator.share({
+         title: "Boda WhyNot!?",
+         text: "¡Mira esta foto! 😍 " + url
+       });
+    } else {
+       window.open(url, "_blank");
+    }
   }
 }
 
