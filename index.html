@@ -26,18 +26,7 @@ body {
 }
 
 /* --- LOGIN --- */
-.login-overlay {
-  position: fixed;
-  inset: 0;
-  background: #000;
-  z-index: 2000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-image: url("https://raw.githubusercontent.com/jcamosa/bodawhynot/main/header.jpg");
-  background-size: cover;
-  background-position: center;
-}
+.login-overlay { position: fixed; inset: 0; background: #000; z-index: 2000; display: flex; justify-content: center; align-items: center; background-image: url("https://raw.githubusercontent.com/jcamosa/bodawhynot/main/header.jpg"); background-size: cover; background-position: center; }
 .login-overlay::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); }
 .login-box { position: relative; z-index: 2001; background: white; width: 85%; max-width: 320px; padding: 30px 20px; border-radius: 12px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
 .login-box h2 { margin-top: 0; font-family: "Georgia", serif; color: #333; }
@@ -115,57 +104,80 @@ input[type=file] { display: none; }
 .toast.show { opacity: 1; top: 40px; }
 
 /* ========================================================= */
-/* MODAL Y PRESENTACIÓN (LA MAGIA EMPIEZA AQUÍ)              */
+/* 🌟 PRESENTACIÓN DE GALA (MAGIA VISUAL TV)                 */
 /* ========================================================= */
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); display: none; justify-content: center; align-items: center; z-index: 100; overflow: hidden; padding: 0; box-sizing: border-box; cursor: pointer; }
+.modal { position: fixed; inset: 0; background: #000; display: none; justify-content: center; align-items: center; z-index: 100; overflow: hidden; padding: 0; box-sizing: border-box; cursor: pointer; }
 .modal-content { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
-.modal-card { background: white; width: 100%; max-width: 500px; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; position: relative; max-height: 90vh; cursor: default; margin: 20px;}
-.modal-card .card-media-container { background: #000; }
-.modal-card .card-media-container img { max-height: 60vh; }
-.modal-card .comments-section { overflow-y: auto; flex: 1; max-height: 200px; }
-.modal img.simple-img { max-width: 100vw; max-height: 100vh; object-fit: contain; }
 
-/* Wrapper Exclusivo Presentación */
+/* Slide Normal */
 .slideshow-wrapper { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 50px 20px; box-sizing: border-box; overflow: hidden; }
 
-/* Animaciones Creadas */
+/* Fondo difuminado anti-márgenes negros */
+.slideshow-bg { position: absolute; inset: -5%; width: 110%; height: 110%; object-fit: cover; filter: blur(25px) brightness(0.35); z-index: 0; animation: gentlePan 20s linear infinite alternate; }
+
+@keyframes gentlePan { 0% { transform: scale(1.1) translate(0,0); } 100% { transform: scale(1.15) translate(-10px, 10px); } }
 @keyframes fadeSlideIn { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
 @keyframes textDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes textUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes infoPopLeft { from { opacity: 0; transform: translateX(-40px) scale(0.9); } to { opacity: 1; transform: translateX(0) scale(1); } }
 
-/* Componentes Slide Normal */
-.slideshow-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1; animation: fadeSlideIn 1.5s ease-out forwards; }
-.slideshow-brand-top { font-family: "Georgia", serif; font-size: 38px; font-style: italic; color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,0.9); text-align: center; z-index: 10; animation: textDown 1.5s ease-out; }
-.slideshow-brand-bottom { font-family: "Georgia", serif; font-size: 45px; font-weight: 700; color: var(--accent); text-shadow: 0 4px 20px rgba(0,0,0,0.9); text-align: center; z-index: 10; letter-spacing: 2px; animation: textUp 1.5s ease-out; }
+/* Imagen Central (Alta Calidad) */
+.slideshow-img { position: relative; width: 100%; height: 100%; object-fit: contain; z-index: 1; filter: drop-shadow(0 15px 35px rgba(0,0,0,0.8)); animation: fadeSlideIn 1.5s ease-out forwards; }
+
+/* Letras Mágicas */
+.slideshow-brand-top { 
+    font-family: "Georgia", serif; font-size: 5vh; font-style: italic; font-weight: bold;
+    background: linear-gradient(to right, #fcf6ba, #fff, #bf953f); -webkit-background-clip: text; color: transparent; 
+    text-shadow: 0 5px 20px rgba(0,0,0,0.9); text-align: center; z-index: 10; padding-top: 20px;
+    animation: textDown 1.5s ease-out; 
+}
+.slideshow-brand-bottom { 
+    font-family: "Georgia", serif; font-size: 6vh; font-weight: 900; 
+    background: linear-gradient(to right, #dcb183, #fff, #c6a76b); -webkit-background-clip: text; color: transparent; 
+    text-shadow: 0 5px 25px rgba(0,0,0,0.9); text-align: center; z-index: 10; letter-spacing: 5px; padding-bottom: 20px;
+    text-transform: uppercase; animation: textUp 1.5s ease-out; 
+}
 
 /* Píldora Elegante (Izquierda) */
-.slideshow-info { position: absolute; bottom: 40px; left: 30px; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); padding: 15px 25px; border-radius: 40px; color: white; display: flex; gap: 12px; align-items: center; font-size: 18px; font-weight: 600; box-shadow: 0 15px 35px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); z-index: 10; animation: infoPopLeft 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; white-space: nowrap; }
+.slideshow-info { position: absolute; bottom: 50px; left: 40px; background: rgba(0,0,0,0.65); backdrop-filter: blur(15px); padding: 15px 30px; border-radius: 50px; color: white; display: flex; gap: 15px; align-items: center; font-size: 22px; font-weight: 600; box-shadow: 0 15px 40px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2); z-index: 10; animation: infoPopLeft 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; white-space: nowrap; }
 .slideshow-info .icon-block { display: flex; align-items: center; gap: 8px; }
-.slideshow-heart { width: 24px; height: 24px; fill: #ed4956; animation: beat 1s infinite; filter: drop-shadow(0 0 5px rgba(237,73,86,0.6)); }
-.slideshow-info span { font-weight: 400; opacity: 0.9; margin-right: 5px;}
+.slideshow-heart { width: 30px; height: 30px; fill: #ed4956; animation: beat 1s infinite; filter: drop-shadow(0 0 8px rgba(237,73,86,0.7)); }
+.slideshow-info span { font-weight: 400; opacity: 0.95; margin-right: 10px; font-size: 24px;}
 @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 
 /* ========================================================= */
-/* EL MOMENTO ÓSCAR: PANTALLA DE RANKING (TOP 3)             */
+/* 🏅 RANKING COLLAGE DE GALA (MUSEO)                        */
 /* ========================================================= */
-.ranking-wrapper { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle at center, #2a2a2a 0%, #000 100%); z-index: 20; padding: 20px; text-align: center; }
-.ranking-title { color: var(--accent); font-family: "Georgia", serif; font-size: 45px; font-weight: bold; margin-bottom: 50px; text-transform: uppercase; letter-spacing: 3px; animation: textDown 1s ease-out; text-shadow: 0 0 25px rgba(198,167,107,0.4); }
-.podium { display: flex; align-items: flex-end; justify-content: center; gap: 20px; width: 100%; max-width: 800px; }
-.podium-item { display: flex; flex-direction: column; align-items: center; animation: fadeSlideIn 1s ease-out forwards; opacity: 0; }
-.podium-item.rank-2 { order: 1; animation-delay: 0.2s; }
-.podium-item.rank-1 { order: 2; animation-delay: 0.6s; z-index: 5; margin-bottom: 40px; transform: scale(1.15); }
-.podium-item.rank-3 { order: 3; animation-delay: 0.4s; }
+.ranking-wrapper { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #0a0a0a; z-index: 20; padding: 40px; overflow: hidden; }
+.ranking-bg { position: absolute; inset: -20%; background: radial-gradient(circle at center, #2e2210 0%, #000 60%); z-index: 0; animation: pulseBg 4s infinite alternate; }
+@keyframes pulseBg { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
 
-.podium-ring { width: 140px; height: 140px; border-radius: 50%; padding: 8px; margin-bottom: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); }
-.rank-1 .podium-ring { width: 180px; height: 180px; background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); box-shadow: 0 0 30px rgba(191,149,63,0.5); }
-.rank-2 .podium-ring { background: linear-gradient(45deg, #9c9c9c, #ffffff, #c0c0c0, #eaeaea, #7f7f7f); }
-.rank-3 .podium-ring { background: linear-gradient(45deg, #804a00, #dcb183, #cd7f32, #b06b28); }
-.podium-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid #111; }
+.ranking-title { position: relative; z-index: 10; color: #fcf6ba; font-family: "Georgia", serif; font-size: 5vh; font-weight: bold; margin-bottom: 5vh; text-transform: uppercase; letter-spacing: 5px; text-shadow: 0 0 30px rgba(191,149,63,0.8); animation: textDown 1s ease-out; }
 
-.podium-name { color: white; font-size: 18px; font-weight: 600; margin-bottom: 5px; text-shadow: 0 2px 5px #000; }
-.rank-1 .podium-name { font-size: 24px; color: #fcf6ba; }
-.podium-likes { display: flex; align-items: center; justify-content: center; gap: 5px; color: #ed4956; font-size: 22px; font-weight: bold; }
+.collage-container { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; gap: 3vw; width: 100%; max-width: 1400px; height: 65vh; }
+
+.collage-card { position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.9); animation: fadeSlideIn 1s ease-out forwards; opacity: 0; display: flex; flex-direction: column; background: #000; }
+.collage-card img { width: 100%; height: 100%; object-fit: cover; }
+.collage-info { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.95) 70%); padding: 40px 20px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.collage-name { color: white; font-size: 2.2vh; font-weight: bold; margin-bottom: 8px; text-shadow: 0 2px 8px black; }
+.collage-likes { display: flex; align-items: center; gap: 8px; color: #ed4956; font-size: 2.5vh; font-weight: bold; text-shadow: 0 2px 8px black; }
+
+/* Tarjetas por Puesto */
+.rank-2 { width: 28%; height: 85%; border: 4px solid #c0c0c0; order: 1; animation-delay: 0.2s; box-shadow: 0 0 40px rgba(192,192,192,0.3); }
+.rank-1 { width: 36%; height: 100%; border: 6px solid #bf953f; order: 2; animation-delay: 0.6s; z-index: 5; box-shadow: 0 0 70px rgba(191,149,63,0.7); transform: scale(1.05); }
+.rank-3 { width: 28%; height: 85%; border: 4px solid #cd7f32; order: 3; animation-delay: 0.4s; box-shadow: 0 0 40px rgba(205,127,50,0.3); }
+
+/* Insignias (Medallas) */
+.badge { position: absolute; top: -15px; left: -15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: "Georgia", serif; z-index: 10; box-shadow: 0 10px 20px rgba(0,0,0,0.7); border: 2px solid rgba(255,255,255,0.3); }
+.rank-1 .badge { width: 70px; height: 70px; font-size: 35px; background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728); color: #4a3500; top: -25px; left: -25px; }
+.rank-2 .badge { width: 55px; height: 55px; font-size: 28px; background: linear-gradient(45deg, #9c9c9c, #ffffff, #eaeaea); color: #333; }
+.rank-3 .badge { width: 55px; height: 55px; font-size: 28px; background: linear-gradient(45deg, #804a00, #dcb183, #cd7f32); color: #3d2100; }
+
+/* Cajas extra para el modal de ver una foto */
+.modal-card { background: white; width: 100%; max-width: 500px; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; position: relative; max-height: 90vh; cursor: default; margin: 20px;}
+.modal-card .card-media-container { background: #000; }
+.modal-card .card-media-container img { max-height: 60vh; }
+.modal-card .comments-section { overflow-y: auto; flex: 1; max-height: 200px; }
 </style>
 </head>
 
@@ -228,7 +240,6 @@ input[type=file] { display: none; }
 // --- CONFIGURACIÓN ---
 const API = "https://script.google.com/macros/s/AKfycbwNcTmXOA7IZHDcDB3v3R_c01KRdI4IyhAj52dOJ-KIxtphyaWSfBlNYnSnraRShsJ_/exec";
 
-/* REFERENCIAS DOM */
 const gallery = document.getElementById("gallery");
 const storiesContainer = document.getElementById("stories");
 const input = document.getElementById("file");
@@ -245,7 +256,6 @@ let isSlideshowActive = false;
 let isFiltering = false; 
 let currentUser = "";
 
-// Variables Presentación
 let slideCounter = 0; 
 let displayedCount = 0;
 const ITEMS_PER_PAGE = 10;
@@ -256,11 +266,11 @@ function timeAgo(dateParam) {
   const now = new Date();
   const seconds = Math.round((now - date) / 1000);
   const minutes = Math.round(seconds / 60);
-  const hours = Math.round(minutes / 60);
-  const days = Math.round(hours / 24);
   if (seconds < 60) return "ahora";
   if (minutes < 60) return `${minutes} min`;
+  const hours = Math.round(minutes / 60);
   if (hours < 24) return `${hours} h`;
+  const days = Math.round(hours / 24);
   if (days < 7) return `${days} d`;
   return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
@@ -282,12 +292,12 @@ function saveUser() {
   currentUser = name; userTag.textContent = currentUser; loginOverlay.style.display = "none";
   showToast("¡Bienvenido " + name + "! 👋");
 }
-
 checkLogin();
 
 const heartSVG = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 const shareSVG = `<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>`;
 
+// Las miniaturas solo se usan en la galería del móvil para ahorrar datos
 function getOptimizedThumbnailUrl(originalUrl) {
     if (originalUrl && originalUrl.includes("id=")) {
         const id = originalUrl.split("id=")[1].split("&")[0];
@@ -296,14 +306,13 @@ function getOptimizedThumbnailUrl(originalUrl) {
     return originalUrl;
 }
 
-// 💥 MAGIA 1: Carga siempre la galería en background aunque esté la presentación puesta
 async function loadGallery(silent = false){
   if(isFiltering && silent) return;
   try {
     const res = await fetch(API);
     let items = await res.json();
     items.sort((a, b) => b.id - a.id); 
-    itemsGlobal = items; // Al actualizar esto, la ruleta de fotos coge las nuevas sola
+    itemsGlobal = items; 
     if(!silent) { renderStories(items); renderGallery(items, false); } 
     else { renderGallery(items, true); }
   } catch (error) { if(!silent) gallery.innerHTML = "<p style='text-align:center;'>Error de conexión.</p>"; }
@@ -444,9 +453,7 @@ function appendComment(container, c) {
     p.innerHTML = `<div class="comment-text">${contentHtml}</div><div class="comment-time">${timeStr}</div>`; container.appendChild(p);
 }
 
-// BUCLE DE ACTUALIZACIÓN: Ahora SIEMPRE carga por detrás para que la presentación tenga fotos frescas
-loadGallery();
-setInterval(() => { loadGallery(true); }, 15000);
+loadGallery(); setInterval(() => { loadGallery(true); }, 15000);
 
 input.onchange = async () => {
   const file = input.files[0]; if(!file) return;
@@ -515,11 +522,6 @@ async function shareImage(event, url) {
   } finally { setTimeout(() => { btn.disabled = false; btn.style.opacity = "1"; }, 2000); }
 }
 
-function openSimpleModal(url){
-  isSlideshowActive = false; modal.style.display = "flex"; modalContent.innerHTML = "";
-  const img = document.createElement("img"); img.className = "simple-img"; img.src = url; modalContent.appendChild(img);
-}
-
 function openFullPost(item) {
     isSlideshowActive = false; modal.style.display = "flex"; modalContent.innerHTML = "";
     let myLikes = []; try { myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]"); } catch(e) {}
@@ -539,12 +541,12 @@ function startSlideshow(){
   changeRandomSlide(); slideInterval = setInterval(() => { changeRandomSlide(); }, 6000);
 }
 
-// 💥 MAGIA 2: LÓGICA DE PRESENTACIÓN + RANKING ÉPICO
+// 💥 LÓGICA DE PRESENTACIÓN + RANKING ÉPICO (ALTA CALIDAD Y FONDOS BLUR)
 function changeRandomSlide(){
   if(itemsGlobal.length === 0) return;
   slideCounter++;
 
-  // Cada 6 fotos, ¡BOOM! Pantallazo del Top 3
+  // Cada 6 fotos, el Top 3
   if (slideCounter % 6 === 0) {
       const fotosRanking = [...itemsGlobal].filter(i => !i.url.includes("/vid.mp4")).sort((a, b) => b.likes - a.likes).slice(0, 3);
       if(fotosRanking.length >= 3) {
@@ -553,7 +555,6 @@ function changeRandomSlide(){
       }
   }
 
-  // Si no toca Ranking, foto aleatoria normal (absorbiendo las nuevas subidas)
   const randomIndex = Math.floor(Math.random() * itemsGlobal.length);
   const item = itemsGlobal[randomIndex];
   if(item.url.includes("/vid.mp4")) { changeRandomSlide(); return; }
@@ -563,11 +564,14 @@ function changeRandomSlide(){
 
   modalContent.innerHTML = `
     <div class="slideshow-wrapper">
+       <img class="slideshow-bg" src="${item.url}">
+       
        <div class="slideshow-brand-top">Boda Jose & Irene</div>
+       
        <img class="slideshow-img" src="${item.url}">
        
        <div class="slideshow-info">
-           <span>Por <strong>${uploader}</strong></span> • 
+           <span>Por <strong>${uploader}</strong></span>
            <div class="icon-block">
               <svg class="slideshow-heart" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> 
               ${likes}
@@ -579,30 +583,40 @@ function changeRandomSlide(){
   `;
 }
 
-// 💥 MAGIA 3: CONSTRUCCIÓN VISUAL DEL PODIO
+// 💥 CONSTRUCCIÓN VISUAL DEL PODIO (COLLAGE RECTANGULAR)
 function showRankingSlide(top3) {
-    // top3[0] es el 1º, top3[1] es el 2º, top3[2] es el 3º
+    // Usamos SIEMPRE top3[x].url para calidad máxima.
     modalContent.innerHTML = `
       <div class="ranking-wrapper">
-         <div class="ranking-title">🏆 Top Fotos WhyNot?!?! 🏆</div>
+         <div class="ranking-bg"></div>
+         <div class="ranking-title">✨ Top Fotos WhyNot?!?! ✨</div>
          
-         <div class="podium">
-            <div class="podium-item rank-2">
-               <div class="podium-ring silver"><img class="podium-img" src="${getOptimizedThumbnailUrl(top3[1].url)}"></div>
-               <div class="podium-name">${top3[1].uploader || "Invitado"}</div>
-               <div class="podium-likes"><svg style="width:20px;fill:#ed4956" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> ${top3[1].likes}</div>
+         <div class="collage-container">
+            <div class="collage-card rank-2">
+               <div class="badge">2</div>
+               <img src="${top3[1].url}">
+               <div class="collage-info">
+                  <div class="collage-name">${top3[1].uploader || "Invitado"}</div>
+                  <div class="collage-likes"><svg style="width:24px;fill:#ed4956" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> ${top3[1].likes}</div>
+               </div>
             </div>
             
-            <div class="podium-item rank-1">
-               <div class="podium-ring gold"><img class="podium-img" src="${getOptimizedThumbnailUrl(top3[0].url)}"></div>
-               <div class="podium-name">${top3[0].uploader || "Invitado"}</div>
-               <div class="podium-likes"><svg style="width:24px;fill:#ed4956" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> ${top3[0].likes}</div>
+            <div class="collage-card rank-1">
+               <div class="badge">1</div>
+               <img src="${top3[0].url}">
+               <div class="collage-info">
+                  <div class="collage-name" style="font-size:3vh; color:#fcf6ba;">${top3[0].uploader || "Invitado"}</div>
+                  <div class="collage-likes" style="font-size:3.5vh;"><svg style="width:30px;fill:#ed4956" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> ${top3[0].likes}</div>
+               </div>
             </div>
 
-            <div class="podium-item rank-3">
-               <div class="podium-ring bronze"><img class="podium-img" src="${getOptimizedThumbnailUrl(top3[2].url)}"></div>
-               <div class="podium-name">${top3[2].uploader || "Invitado"}</div>
-               <div class="podium-likes"><svg style="width:20px;fill:#ed4956" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> ${top3[2].likes}</div>
+            <div class="collage-card rank-3">
+               <div class="badge">3</div>
+               <img src="${top3[2].url}">
+               <div class="collage-info">
+                  <div class="collage-name">${top3[2].uploader || "Invitado"}</div>
+                  <div class="collage-likes"><svg style="width:24px;fill:#ed4956" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> ${top3[2].likes}</div>
+               </div>
             </div>
          </div>
       </div>
