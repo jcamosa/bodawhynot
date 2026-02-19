@@ -62,76 +62,6 @@ body {
 .login-input { width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; margin-bottom: 15px; text-align: center; }
 .login-btn { width: 100%; padding: 12px; background: var(--text-main); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
 
-/* --- EDITOR DE FILTROS --- */
-.filter-overlay {
-  position: fixed;
-  inset: 0;
-  background: #000;
-  z-index: 3000;
-  display: none; 
-  flex-direction: column;
-}
-
-.filter-header {
-  height: 60px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-  color: white;
-  background: #000;
-}
-.filter-btn-cancel { color: #fff; background: none; border: none; font-size: 16px; cursor: pointer; }
-.filter-btn-next { color: #3897f0; background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; }
-
-.filter-preview-area {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #111;
-  overflow: hidden;
-  position: relative;
-}
-.filter-canvas {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-.filter-list {
-  height: 140px;
-  background: #000;
-  display: flex;
-  align-items: center;
-  overflow-x: auto;
-  gap: 10px;
-  padding: 0 10px;
-  -webkit-overflow-scrolling: touch; 
-}
-
-.filter-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  min-width: 80px;
-  flex-shrink: 0;
-}
-.filter-thumb {
-  width: 70px;
-  height: 70px;
-  background-size: cover;
-  background-position: center;
-  margin-bottom: 8px;
-  border: 2px solid transparent;
-  border-radius: 4px;
-}
-.filter-option.active .filter-thumb { border-color: #fff; }
-.filter-name { color: #8e8e8e; font-size: 12px; }
-.filter-option.active .filter-name { color: #fff; }
-
-
 /* --- HEADER --- */
 .header {
   position: relative;
@@ -144,7 +74,7 @@ body {
 }
 .header::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.6)); }
 
-/* Título clicable (Funciona como botón Home) */
+/* Título clicable */
 .header-title { 
   position: absolute; 
   bottom: 20px; 
@@ -159,7 +89,6 @@ body {
 .header-title h1 { font-weight: 300; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
 .header-title span { font-size: 36px; font-family: "Georgia", serif; font-style: italic; font-weight: 700; }
 
-/* TAG DE USUARIO ACTUAL */
 .current-user-tag { 
   position: absolute; 
   top: 15px; 
@@ -206,16 +135,7 @@ body {
   animation: slideDown 0.3s ease;
 }
 .profile-info h3 { margin: 0; font-size: 16px; }
-.profile-info span { font-size: 12px; color: #ccc; }
-.close-profile-btn {
-  background: rgba(255,255,255,0.2);
-  border: none;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-}
+.close-profile-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 @keyframes slideDown { from { opacity:0; transform: translateY(-10px); } to { opacity:1; transform: translateY(0); } }
 
 .card { background: var(--card-bg); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; }
@@ -228,9 +148,28 @@ body {
 .uploader-info:hover { text-decoration: underline; }
 .upload-time { font-size: 11px; color: #a0a0a0; font-weight: 400; }
 
-/* MEDIA */
+/* MEDIA Y ANIMACIÓN DEL CORAZÓN GIGANTE */
 .card-media-container { width: 100%; background: #f4f4f4; min-height: 300px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
 .card-media-container img { width: 100%; height: auto; max-height: 600px; object-fit: contain; display: block; }
+
+.big-heart {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 120px; height: 120px;
+    z-index: 20;
+    pointer-events: none;
+    animation: heartPop 1s ease-out forwards;
+}
+.big-heart svg { width: 100%; height: 100%; filter: drop-shadow(0 4px 15px rgba(0,0,0,0.5)); }
+
+@keyframes heartPop {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+    15% { transform: translate(-50%, -50%) scale(1.2); }
+    30% { transform: translate(-50%, -50%) scale(1); }
+    70% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
 
 /* ACCIONES */
 .actions { padding: 12px 16px 0; display: flex; justify-content: space-between; align-items: center; }
@@ -276,10 +215,6 @@ input[type=file] { display: none; }
 /* TOAST */
 .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 500; z-index: 3100; opacity: 0; transition: opacity 0.3s, top 0.3s; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 .toast.show { opacity: 1; top: 40px; }
-
-/* HEARTS */
-.heart-floater { position: absolute; color: #ed4956; font-size: 20px; pointer-events: none; animation: floatUp 1s ease-out forwards; z-index: 2000; }
-@keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-100px) scale(1.5); opacity: 0; } }
 </style>
 </head>
 
@@ -300,18 +235,6 @@ input[type=file] { display: none; }
     <h1>Boda</h1>
     <span>WhyNot!?</span>
   </div>
-</div>
-
-<div id="filterOverlay" class="filter-overlay">
-  <div class="filter-header">
-    <button class="filter-btn-cancel" onclick="closeFilterEditor()">Cancelar</button>
-    <span style="font-weight:600">Editar</span>
-    <button class="filter-btn-next" onclick="uploadFilteredPhoto()">Enviar</button>
-  </div>
-  <div class="filter-preview-area">
-    <canvas id="filterCanvas" class="filter-canvas"></canvas>
-  </div>
-  <div class="filter-list" id="filterList"></div>
 </div>
 
 <div class="stories-title">🏆 Top 5 - Más Votados</div>
@@ -364,14 +287,6 @@ const toast = document.getElementById("toast");
 const loginOverlay = document.getElementById("loginOverlay");
 const usernameInput = document.getElementById("usernameInput");
 const userTag = document.getElementById("userTag");
-const filterOverlay = document.getElementById("filterOverlay");
-const filterCanvas = document.getElementById("filterCanvas");
-const filterList = document.getElementById("filterList");
-
-let ctx = filterCanvas.getContext("2d", { willReadFrequently: true });
-let currentImage = new Image();
-let currentFilter = "none";
-let rawFile = null;
 
 let itemsGlobal = [];
 let slideInterval = null;
@@ -383,16 +298,7 @@ let currentUser = "";
 let displayedCount = 0;
 const ITEMS_PER_PAGE = 10;
 
-const FILTERS = [
-  { name: "Normal", val: "none" },
-  { name: "B&W", val: "grayscale(100%)" },
-  { name: "Sepia", val: "sepia(100%)" },
-  { name: "Cálido", val: "sepia(50%) contrast(110%) brightness(110%)" },
-  { name: "Vintage", val: "sepia(40%) contrast(120%) brightness(90%) saturate(80%)" },
-  { name: "Fade", val: "brightness(110%) contrast(90%) saturate(80%)" },
-  { name: "Drama", val: "contrast(140%) saturate(0%)" }
-];
-
+// FUNCIONES DE TIEMPO Y LOGIN
 function timeAgo(dateParam) {
   if (!dateParam) return "";
   const date = new Date(dateParam);
@@ -446,6 +352,16 @@ checkLogin();
 const heartSVG = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 const shareSVG = `<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>`;
 
+// GENERADOR DE URLS OPTIMIZADAS PARA LA GALERÍA
+function getOptimizedThumbnailUrl(originalUrl) {
+    // Si es de Google Drive, pedimos la versión miniatura (w800 = ancho 800px) para acelerar
+    if (originalUrl && originalUrl.includes("id=")) {
+        const id = originalUrl.split("id=")[1].split("&")[0];
+        return `https://drive.google.com/thumbnail?id=${id}&sz=w800`;
+    }
+    return originalUrl;
+}
+
 async function loadGallery(silent = false){
   if(isFiltering && silent) return;
 
@@ -459,7 +375,7 @@ async function loadGallery(silent = false){
       renderStories(items); 
       renderGallery(items, false); 
     } else {
-      renderGallery(items, true); // Actualización silenciosa (para no romper el scroll)
+      renderGallery(items, true); 
     }
   } catch (error) { 
     if(!silent) gallery.innerHTML = "<p style='text-align:center;'>Error de conexión.</p>"; 
@@ -468,7 +384,6 @@ async function loadGallery(silent = false){
 
 function filterByUser(username) {
     if(!username) return;
-    
     isFiltering = true; 
     gallery.innerHTML = ""; 
     
@@ -530,7 +445,7 @@ function renderStories(items) {
 
         el.innerHTML = `
             <div class="story-ring ${ringClass}">
-                <img class="story-img" src="${item.url}" loading="lazy">
+                <img class="story-img" src="${getOptimizedThumbnailUrl(item.url)}" loading="lazy">
             </div>
             <div class="story-name">${item.likes} pts</div>
         `;
@@ -538,7 +453,6 @@ function renderStories(items) {
     });
 }
 
-// --- LOGICA DE PAGINACION Y ACTUALIZACION ---
 function renderGallery(items, isSilent = false) {
     if(isFiltering) return; 
 
@@ -563,7 +477,6 @@ function renderGallery(items, isSilent = false) {
 
 function renderNextBatch(items = itemsGlobal, myLikes = null) {
     if (isFiltering) return; 
-    
     if (!myLikes) {
         try { myLikes = JSON.parse(localStorage.getItem("whynot_likes") || "[]"); } catch(e) { myLikes = []; }
     }
@@ -572,7 +485,7 @@ function renderNextBatch(items = itemsGlobal, myLikes = null) {
     if (batch.length === 0) return;
 
     batch.forEach(item => {
-        if(item.url.includes("/vid.mp4")) return; // Saltamos videos de momento
+        if(item.url.includes("/vid.mp4")) return; 
         const card = createCardElement(item, myLikes);
         gallery.appendChild(card);
     });
@@ -580,7 +493,6 @@ function renderNextBatch(items = itemsGlobal, myLikes = null) {
     displayedCount += batch.length;
 }
 
-// ACTUALIZA LIKES/COMENTARIOS Y AÑADE FOTOS NUEVAS SIN ROMPER EL SCROLL
 function updateExistingCards(newItems, myLikes) {
     const existingCards = document.querySelectorAll('.card');
     const existingIds = Array.from(existingCards).map(c => parseInt(c.id.replace('post-', '')));
@@ -605,7 +517,6 @@ function updateExistingCards(newItems, myLikes) {
     });
 }
 
-// DETECTOR DE SCROLL
 window.addEventListener('scroll', () => {
     if (isFiltering) return; 
     const scrollY = window.scrollY || document.documentElement.scrollTop;
@@ -615,14 +526,10 @@ window.addEventListener('scroll', () => {
         }
     }
 });
-// ----------------------------------------------
-
 
 function createCardElement(item, myLikes, isModal = false) {
       const card = document.createElement("div");
       card.className = isModal ? "modal-card" : "card";
-      
-      // Asignamos el ID para poder actualizarlo luego
       if (!isModal) card.id = `post-${item.id}`;
 
       const uploaderName = item.uploader || "Invitado";
@@ -643,10 +550,9 @@ function createCardElement(item, myLikes, isModal = false) {
       const mediaContainer = document.createElement("div");
       mediaContainer.className = "card-media-container";
       
-      if(!isModal) mediaContainer.onclick = () => openFullPost(item);
-      
       const img = document.createElement("img");
-      img.src = item.url; 
+      // Muestra imagen optimizada en la galería, pero original en el modal
+      img.src = isModal ? item.url : getOptimizedThumbnailUrl(item.url); 
       img.loading = "lazy";
       mediaContainer.appendChild(img);
       card.appendChild(mediaContainer);
@@ -661,12 +567,24 @@ function createCardElement(item, myLikes, isModal = false) {
       likeBtn.className = "icon-btn" + (alreadyLiked ? " liked" : "");
       likeBtn.innerHTML = heartSVG;
       const likeCountId = isModal ? `likes-modal-${item.id}` : `likes-${item.id}`;
-      likeBtn.onclick = (e) => handleLike(e, item.id, likeCountId);
       
+      likeBtn.onclick = (e) => handleLike(e, item.id, likeCountId, mediaContainer);
+      
+      // Doble click en la imagen para dar Like (Estilo Instagram)
+      if(!isModal) {
+          mediaContainer.ondblclick = () => {
+              if(!likeBtn.classList.contains("liked")) {
+                  likeBtn.click();
+              } else {
+                  showBigHeart(mediaContainer); // Mostrar corazón por placer aunque ya tenga like
+              }
+          };
+      }
+
       const shareBtn = document.createElement("button");
       shareBtn.className = "icon-btn";
       shareBtn.innerHTML = shareSVG;
-      shareBtn.onclick = (e) => shareImage(e, item.url);
+      shareBtn.onclick = (e) => shareImage(e, item.url); // Siempre comparte la ORIGINAL
 
       leftActions.appendChild(likeBtn);
       leftActions.appendChild(shareBtn);
@@ -754,126 +672,66 @@ function appendComment(container, c) {
 loadGallery();
 setInterval(() => { if(!isSlideshowActive) loadGallery(true); }, 15000);
 
-/* --- SISTEMA DE UPLOAD CON FILTROS --- */
+/* --- SISTEMA DE UPLOAD DIRECTO (SIN FILTROS) --- */
 input.onchange = async () => {
   const file = input.files[0];
   if(!file) return;
-  rawFile = file;
 
+  showToast("Procesando foto... ⏳");
+  
   const reader = new FileReader();
   reader.onload = (e) => {
-    currentImage.onload = () => { openFilterEditor(); };
-    currentImage.src = e.target.result;
+    const img = new Image();
+    img.onload = () => {
+       // Guardamos la foto en calidad alta (hasta 2048px) para no reventar Drive ni el navegador
+       const canvas = document.createElement("canvas");
+       const MAX_SIZE = 2048; 
+       let w = img.width;
+       let h = img.height;
+       
+       if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; } } 
+       else { if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; } }
+
+       canvas.width = w;
+       canvas.height = h;
+       const ctx = canvas.getContext("2d");
+       ctx.drawImage(img, 0, 0, w, h);
+       
+       const base64 = canvas.toDataURL("image/jpeg", 0.9).split(",")[1];
+       
+       showToast("Subiendo foto... 🚀");
+
+       const payload = {
+            action: "upload",
+            file: base64,
+            name: file.name || "foto.jpg",
+            type: "image/jpeg",
+            uploader: currentUser || "Anónimo"
+       };
+
+       fetch(API, {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: { "Content-Type": "text/plain" }
+       })
+       .then(res => res.text())
+       .then(txt => {
+            showToast("¡Foto subida correctamente! 🎉");
+            input.value = "";
+            loadGallery();
+       })
+       .catch((err) => {
+            console.error(err);
+            showToast("Error al subir. Intenta de nuevo.");
+       });
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 };
 
-function openFilterEditor() {
-    filterOverlay.style.display = "flex";
-    currentFilter = "none";
-    filterList.innerHTML = "";
-    FILTERS.forEach(f => {
-        const div = document.createElement("div");
-        div.className = "filter-option";
-        if(f.val === "none") div.classList.add("active");
-        div.innerHTML = `<div class="filter-thumb" style="filter:${f.val}; background-image:url(${currentImage.src});"></div><span class="filter-name">${f.name}</span>`;
-        div.onclick = () => {
-            currentFilter = f.val;
-            document.querySelectorAll(".filter-option").forEach(el => el.classList.remove("active"));
-            div.classList.add("active");
-            drawCanvas(false); 
-        };
-        filterList.appendChild(div);
-    });
-    drawCanvas(false);
-}
-
-function closeFilterEditor() { filterOverlay.style.display = "none"; input.value = ""; }
-
-function drawCanvas(isHighRes = false) {
-    const MAX_SIZE = isHighRes ? 2048 : 600; 
-    let w = currentImage.width;
-    let h = currentImage.height;
-    if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; } } 
-    else { if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; } }
-
-    filterCanvas.width = w;
-    filterCanvas.height = h;
-    
-    ctx = filterCanvas.getContext("2d", { willReadFrequently: true });
-    ctx.clearRect(0,0,w,h);
-    ctx.save(); 
-    
-    if(isHighRes) {
-        ctx.filter = "none";
-    } else {
-        ctx.filter = currentFilter;
-    }
-    
-    ctx.drawImage(currentImage, 0, 0, w, h);
-    ctx.restore(); 
-}
-
-function uploadFilteredPhoto() {
-    drawCanvas(false); 
-    
-    setTimeout(() => {
-        const dataURL = filterCanvas.toDataURL("image/jpeg", 0.7); 
-        const base64 = dataURL.split(",")[1];
-        
-        closeFilterEditor();
-        showToast("Subiendo foto... 🚀");
-
-        const payload = {
-            action: "upload",
-            file: base64,
-            name: "filtro_" + rawFile.name,
-            type: "image/jpeg",
-            uploader: currentUser || "Anónimo"
-        };
-
-        fetch(API, {
-            method: "POST",
-            body: JSON.stringify(payload),
-            headers: { "Content-Type": "text/plain" }
-        })
-        .then(res => res.text())
-        .then(txt => {
-              showToast("¡Foto subida correctamente! 🎉");
-              loadGallery();
-              uploadOriginalPhoto();
-        })
-        .catch((e) => {
-              console.error(e);
-              showToast("Error al subir. Intenta de nuevo.");
-        });
-    }, 100);
-}
-
-function uploadOriginalPhoto() {
-    drawCanvas(true);
-    setTimeout(() => {
-        const dataURL = filterCanvas.toDataURL("image/jpeg", 0.85); 
-        const base64 = dataURL.split(",")[1];
-        
-        const payload = {
-            action: "upload",
-            file: base64,
-            name: "ORIGINAL_" + rawFile.name, 
-            type: "image/jpeg",
-            uploader: currentUser || "Anónimo"
-        };
-
-        fetch(API, {
-            method: "POST",
-            body: JSON.stringify(payload),
-            headers: { "Content-Type": "text/plain" }
-        }).then(() => console.log("Original subida OK"));
-    }, 200);
-}
-
-/* HANDLE LIKE/UNLIKE */
-async function handleLike(event, id, countElementId) {
+/* HANDLE LIKE/UNLIKE Y CORAZON GIGANTE */
+async function handleLike(event, id, countElementId, mediaContainer) {
   const btn = event.currentTarget;
   const countEl = document.getElementById(countElementId); 
   let current = 0;
@@ -894,7 +752,7 @@ async function handleLike(event, id, countElementId) {
       await fetch(API, {method: "POST", body: JSON.stringify({action: "unlike", id: id}), headers: {"Content-Type": "text/plain"}});
   } else {
       btn.classList.add("liked");
-      spawnFloatingHearts(btn);
+      showBigHeart(mediaContainer); // Animación Corazón Grande
       let newVal = current + 1;
       if(countEl) countEl.textContent = `${newVal} Me gusta`;
       if (!myLikes.includes(id)) { myLikes.push(id); localStorage.setItem("whynot_likes", JSON.stringify(myLikes)); }
@@ -903,21 +761,18 @@ async function handleLike(event, id, countElementId) {
   }
 }
 
-function spawnFloatingHearts(element) {
-  const rect = element.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top;
-  for (let i = 0; i < 5; i++) {
+function showBigHeart(container) {
+    if(!container) return;
+    // Si ya hay un corazón animándose, no ponemos otro
+    if(container.querySelector('.big-heart')) return; 
+    
     const heart = document.createElement("div");
-    heart.className = "heart-floater";
-    heart.textContent = "❤️";
-    const randomX = (Math.random() - 0.5) * 40;
-    heart.style.left = `${centerX + randomX}px`;
-    heart.style.top = `${centerY}px`;
-    heart.style.animationDuration = `${0.8 + Math.random() * 0.5}s`;
-    document.body.appendChild(heart);
-    setTimeout(() => heart.remove(), 1500);
-  }
+    heart.className = "big-heart";
+    heart.innerHTML = `<svg viewBox="0 0 24 24" fill="#ed4956"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+    container.appendChild(heart);
+    
+    // Lo eliminamos del código cuando acabe la animación (1 segundo)
+    setTimeout(() => heart.remove(), 1000);
 }
 
 async function comment(id, name, text){
@@ -931,7 +786,7 @@ async function comment(id, name, text){
 }
 
 function showToast(msg) {
-    toast.textContent = msg || "¡Foto subida correctamente! 🎉";
+    toast.textContent = msg || "¡Notificación!";
     toast.classList.add("show");
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
@@ -940,20 +795,25 @@ async function shareImage(event, url) {
   const btn = event.currentTarget;
   if(btn.disabled) return;
   btn.style.opacity = "0.5";
-  showToast("Preparando foto... 📲");
+  showToast("Preparando foto original... 📲");
   btn.disabled = true;
   try {
     let id = "";
     if (url.includes("id=")) { id = url.split("id=")[1].split("&")[0]; }
+    
+    // FORZAMOS LA DESCARGA ORIGINAL AL COMPARTIR (s0 = tamaño original)
     const fetchUrl = `https://lh3.googleusercontent.com/d/${id}=s0`;
     const response = await fetch(fetchUrl);
+    
     if (!response.ok) throw new Error("Error red");
     const blob = await response.blob();
     const file = new File([blob], `boda_whynot_${id}.jpg`, { type: "image/jpeg" });
+    
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: "Boda WhyNot!?", text: "¡Mira este recuerdo! 😍" });
     } else { throw new Error("No soporta archivos"); }
   } catch (error) {
+    // Fallback: Compartimos directamente el enlace original si falla el archivo
     if (navigator.share) { navigator.share({ title: "Boda WhyNot!?", text: "¡Mira esta foto! 😍 " + url }); } 
     else { window.open(url, "_blank"); }
   } finally { setTimeout(() => { btn.disabled = false; btn.style.opacity = "1"; }, 2000); }
